@@ -45,4 +45,4 @@ Grupo 1 - 6º CCOMP
 </ul>
 
 # 📋 Licença/License
-<a href="https://github.com/2026-2-NCC6/Projeto1">Swing Sense</a> © 2026 by <a href="https://github.com/2026-2-NCC6/Projeto1">Antônio Petri, Gabriel Paschoal, Lucas Maciel, Thiago Akira</a> is licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a><img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt="" style="max-width: 1em;max-height:1em;margin-left: .1em;"><img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt="" style="max-width: 1em;max-height:1em;margin-left: .1em;">
+<a href="https://github.com/2026-2-NCC6/Projeto1">Swing Sense</a> © 2026 by <a href="https://github.com/2026-2-NCC6/Projeto1">Antônio Petri, Gabriel Paschoal, Lucas Maciel, Thiago Akira</a> is licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a><img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt="" style="max-width: 0.5em;max-height:1em;margin-left: .1em;"><img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt="" style="max-width: 0.5em;max-height:1em;margin-left: .1em;">
