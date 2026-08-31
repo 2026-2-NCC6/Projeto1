@@ -45,4 +45,4 @@ Grupo 1 - 6º CCOMP
 </ul>
 
 # 📋 Licença/License
-<a href="https://github.com/2026-2-NCC6/Projeto3">TopSpin Analytics</a> © 2026 por <a href="https://github.com/danmoribe">Daniel Moribe, <a href="https://github.com/Leonardoss23">Leonardo Santos da Silva,</a> <a href="https://github.com/lucassgutierrezz">Lucas de Lima Gutierrez <a/> e <a href="https://github.com/vitorzoken">Vitor Kenzo Kanashiro <a/> está licenciado sob <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> <img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt="" style="width: 16px; height: 16px; margin-left: 4px; vertical-align: middle;"><img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt="" style="width: 16px; height: 16px; margin-left: 4px; vertical-align: middle;">
+
