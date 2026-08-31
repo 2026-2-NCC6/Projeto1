@@ -10,6 +10,18 @@ Grupo 1 - 6º CCOMP
 
 # 📄 Descrição
 
+O **Swing Sense** é uma raquete de tênis inteligente que capta os movimentos do jogador durante o jogo e identifica automaticamente o tipo de tacada executada — **saque, forehand ou backhand**. Um sensor de movimento (IMU) acoplado ao cabo da raquete, controlado por um microcontrolador ESP32, lê continuamente os dados de aceleração e rotação e os processa por meio de uma máquina de estados capaz de reconhecer o padrão de cada golpe.
+
+Os dados são transmitidos via **Bluetooth (BLE)** para um aplicativo mobile, que exibe estatísticas de desempenho e histórico de treino ao jogador, sem que a raquete precise se conectar diretamente à internet.
+
+O projeto integra, de forma prática, os conteúdos de cinco disciplinas do 6º semestre de Ciência da Computação:
+
+- **Sistemas Embarcados e Robótica** — leitura de sensores e controle do microcontrolador;
+- **Projeto Interdisciplinar (IoT)** — arquitetura do ecossistema raquete → app → backend;
+- **Teoria da Computação e Linguagens Formais** — formalização da detecção de tacada como uma máquina de estados finitos;
+- **Redes de Computadores e Cibersegurança** — comunicação segura entre dispositivo, aplicativo e servidor;
+- **Inovação e Empreendedorismo** — estruturação da proposta como oportunidade de negócio.
+
 # 📋 Detalhes
  🗂️ Estrutura de pastas<br>
  ├── 🗂️ Documentos/<br>
