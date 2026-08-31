@@ -1,4 +1,4 @@
-# SmileREAD TENIS
+# Swing Sense
 Grupo 1 - 6º CCOMP
 # FECAP - Fundação de Comércio Álvares Penteado
 <p align="center">
