@@ -48,13 +48,17 @@ O projeto integra, de forma prática, os conteúdos de cinco disciplinas do 6º 
  # 💻 Tecnologias para Desenvolvimento
 
 <ul>
-<ul>
   <li><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg" width="18"/> <a href="https://code.visualstudio.com/">Visual Studio Code</a></li>
   <li><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/arduino/arduino-original.svg" width="18"/> <a href="https://www.arduino.cc/">Arduino (ESP32)</a></li>
+  <li><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg" width="18"/> <a href="https://en.cppreference.com/">C/C++</a></li>
+  <li><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/flutter/flutter-original.svg" width="18"/> <a href="https://flutter.dev/">Flutter</a></li>
+  <li><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dart/dart-original.svg" width="18"/> <a href="https://dart.dev/">Dart</a></li>
+  <li><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" width="18"/> <a href="https://www.python.org/">Python</a></li>
+  <li><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/fastapi/fastapi-original.svg" width="18"/> <a href="https://fastapi.tiangolo.com/">FastAPI</a></li>
+  <li><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" width="18"/> <a href="https://www.postgresql.org/">PostgreSQL</a></li>
   <li><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" width="18"/> <a href="https://github.com/">GitHub</a></li>
 </ul>
-</ul>
-</ul>
+ 
 
 # 📋 Licença/License
 <a href="https://github.com/2026-2-NCC6/Projeto1">Swing Sense</a> © 2026 by <a href="https://github.com/2026-2-NCC6/Projeto1">Antônio Petri, Gabriel Paschoal, Lucas Maciel, Thiago Akira</a> is licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a><img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt="" style="width: 18px;height:18px;margin-left: 4px;"><img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt="" style="width: 18px;height:18px;margin-left: 4px;">
