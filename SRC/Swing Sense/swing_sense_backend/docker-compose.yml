@@ -1,0 +1,11 @@
+services:
+  api:
+    build: .
+    container_name: swing_sense_api
+    restart: unless-stopped
+    environment:
+      PORT: 8080
+      JWT_SECRET: troque-este-segredo-antes-de-ir-para-producao
+      JWT_EXPIRES_IN_HOURS: 168
+    ports:
+      - "8080:8080"
