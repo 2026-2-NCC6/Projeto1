@@ -11,25 +11,35 @@ O ambiente foi propositalmente deixado "plug and play": o app mobile usa um
 estiver pronto, basta substituir o mock por uma conexao BLE/Wi-Fi que envie o
 mesmo formato de evento - nada na API muda.
 
-## Banco de dados: em memoria (por enquanto)
+## Banco de dados: PostgreSQL (Supabase)
 
-Esta API **nao usa PostgreSQL nem qualquer outro banco externo** no momento -
-todos os dados (usuarios, treinos, sessoes, metas, glossario) vivem em uma
-`MemoryStore` (`lib/src/db/memory_store.dart`), populada automaticamente com
-dados de demonstracao toda vez que o servidor inicia (`lib/src/db/database.dart`).
-Isso significa:
+Esta API usa o PostgreSQL hospedado no Supabase como banco de dados. Toda a
+leitura/escrita (usuarios, treinos, sessoes, metas, glossario) passa pelo
+`PgStore` (`lib/src/db/postgres_store.dart`), que roda queries parametrizadas
+contra as tabelas ja criadas no projeto Supabase (`lib/src/db/schema.sql` e a
+referencia do modelo de dados). A conexao e feita por `lib/src/db/database.dart`
+usando um pool (`package:postgres`).
 
-- **Nao precisa instalar nada** (nem Docker, nem Postgres) para rodar.
-- Os dados **resetam** cada vez que o servidor e reiniciado.
-- `lib/src/db/schema.sql` ficou como referencia do modelo de dados original em
-  SQL, para quando alguem do time for plugar um banco de verdade.
+Configure as credenciais em um `.env` local (nunca commitado - veja
+`.env.example`):
 
-Login de demonstracao (recriado a cada start do servidor):
-`demo@swingsense.app` / `senha123`.
+```
+DB_HOST=aws-0-us-east-1.pooler.supabase.com
+DB_PORT=5432
+DB_NAME=postgres
+DB_USER=postgres.<referencia-do-projeto>
+DB_PASSWORD=<senha-do-banco>
+DB_SSL_MODE=require
+```
+
+Use a connection string do modo **Session pooler** (porta 5432) do Supabase -
+o modo Transaction pooler (porta 6543) nao suporta prepared statements, que
+esta API usa.
 
 ## Como rodar
 
 ```bash
+cp .env.example .env   # preencha DB_HOST/DB_USER/DB_PASSWORD com os dados do seu Supabase
 dart pub get
 dart run bin/server.dart
 ```
@@ -45,12 +55,12 @@ docker compose up -d --build
 ## Estrutura
 
 ```
-bin/server.dart          Entrypoint HTTP (cria a MemoryStore e ja semeia os dados demo)
+bin/server.dart          Entrypoint HTTP (abre o pool de conexao com o Supabase)
 lib/src/app.dart         Monta as rotas publicas e protegidas por JWT
-lib/src/db/              MemoryStore (dados em memoria) + schema.sql de referencia
+lib/src/db/              Database (pool Postgres), PgStore (queries) e schema.sql de referencia
 lib/src/middleware/       Middleware de autenticacao (Bearer JWT)
 lib/src/routes/           Um arquivo por recurso (auth, users, feed, trainings, sessions, goals, glossary, devices)
-lib/src/mappers.dart      Conversao dos registros em memoria para JSON da API
+lib/src/mappers.dart      Conversao das linhas do Postgres para JSON da API
 ```
 
 ## Principais rotas

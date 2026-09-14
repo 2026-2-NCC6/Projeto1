@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
@@ -13,6 +11,7 @@ import 'routes/goal_routes.dart';
 import 'routes/session_routes.dart';
 import 'routes/training_routes.dart';
 import 'routes/user_routes.dart';
+import 'utils/env.dart';
 import 'utils/jwt_util.dart';
 import 'utils/response.dart';
 
@@ -36,8 +35,8 @@ Middleware _corsHeaders() {
 
 Handler buildApp(Database database) {
   final jwtUtil = JwtUtil(
-    secret: Platform.environment['JWT_SECRET'] ?? 'dev-secret-troque-em-producao',
-    expiresInHours: int.parse(Platform.environment['JWT_EXPIRES_IN_HOURS'] ?? '168'),
+    secret: env('JWT_SECRET') ?? 'dev-secret-troque-em-producao',
+    expiresInHours: int.parse(env('JWT_EXPIRES_IN_HOURS') ?? '168'),
   );
 
   final db = database.store;

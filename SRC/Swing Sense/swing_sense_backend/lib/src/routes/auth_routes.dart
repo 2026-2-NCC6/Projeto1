@@ -1,12 +1,13 @@
+import 'package:postgres/postgres.dart';
 import 'package:shelf_router/shelf_router.dart';
 
-import '../db/memory_store.dart';
+import '../db/postgres_store.dart';
 import '../mappers.dart';
 import '../utils/jwt_util.dart';
 import '../utils/password_util.dart';
 import '../utils/response.dart';
 
-Router authRoutes(MemoryStore db, JwtUtil jwtUtil) {
+Router authRoutes(PgStore db, JwtUtil jwtUtil) {
   final router = Router();
 
   // POST /auth/register
@@ -22,8 +23,8 @@ Router authRoutes(MemoryStore db, JwtUtil jwtUtil) {
       return ApiResponse.error('Senha deve ter pelo menos 6 caracteres');
     }
 
-    final alreadyExists = db.users.any((u) => u['email'] == email);
-    if (alreadyExists) {
+    final existing = await db.findUserByEmail(email);
+    if (existing != null) {
       return ApiResponse.error('Ja existe uma conta com este email', status: 409);
     }
 
@@ -31,20 +32,22 @@ Router authRoutes(MemoryStore db, JwtUtil jwtUtil) {
     final level = (body['level'] as String?) ?? 'iniciante';
     final birthDate = body['birthDate'] as String?;
 
-    final row = {
-      'id': MemoryStore.newId(),
-      'name': name,
-      'email': email,
-      'password_hash': hash,
-      'avatar_url': null,
-      'bio': null,
-      'level': level,
-      'birth_date': birthDate,
-      'city': null,
-      'role': 'player',
-      'created_at': DateTime.now(),
-    };
-    db.users.add(row);
+    Map<String, dynamic> row;
+    try {
+      row = await db.createUser(
+        id: PgStore.newId(),
+        name: name,
+        email: email,
+        passwordHash: hash,
+        level: level,
+        birthDate: birthDate,
+      );
+    } on ServerException catch (e) {
+      if (e.code == '23505') {
+        return ApiResponse.error('Ja existe uma conta com este email', status: 409);
+      }
+      rethrow;
+    }
 
     final token = jwtUtil.generate(
       userId: row['id'] as String,
@@ -65,20 +68,13 @@ Router authRoutes(MemoryStore db, JwtUtil jwtUtil) {
       return ApiResponse.error('Email e senha sao obrigatorios');
     }
 
-    Map<String, dynamic>? row;
-    for (final u in db.users) {
-      if (u['email'] == email) {
-        row = u;
-        break;
-      }
-    }
-
+    final row = await db.findUserByEmail(email);
     if (row == null) {
       return ApiResponse.error('Email ou senha incorretos', status: 401);
     }
 
-    final passwordHash = row['password_hash'] as String;
-    if (!PasswordUtil.verify(password, passwordHash)) {
+    final passwordHash = row['password_hash'] as String?;
+    if (passwordHash == null || !PasswordUtil.verify(password, passwordHash)) {
       return ApiResponse.error('Email ou senha incorretos', status: 401);
     }
 

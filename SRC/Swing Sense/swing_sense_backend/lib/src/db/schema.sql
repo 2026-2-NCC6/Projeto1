@@ -1,26 +1,27 @@
--- Smart Sense - schema do banco de dados (PostgreSQL)
--- Aplicado automaticamente na primeira subida do container (docker-entrypoint-initdb.d)
--- ou manualmente pelo Database.migrate() ao iniciar o servidor.
+-- Swing Sense - schema do banco de dados (PostgreSQL / Supabase)
+-- Referencia do modelo de dados ja criado no projeto Supabase usado pelo backend.
+-- As tabelas usam nomes em portugues; as colunas usam os mesmos nomes em ingles
+-- que `lib/src/mappers.dart` e `lib/src/db/postgres_store.dart` esperam.
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE TABLE IF NOT EXISTS users (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS public.usuarios (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
   avatar_url TEXT,
   bio TEXT,
   level TEXT NOT NULL DEFAULT 'iniciante',
   birth_date DATE,
   city TEXT,
   role TEXT NOT NULL DEFAULT 'player',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  password_hash TEXT
 );
 
-CREATE TABLE IF NOT EXISTS follows (
-  follower_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  following_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS public.seguimentos (
+  follower_id UUID NOT NULL REFERENCES public.usuarios(id) ON DELETE CASCADE,
+  following_id UUID NOT NULL REFERENCES public.usuarios(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (follower_id, following_id),
   CHECK (follower_id <> following_id)
@@ -29,9 +30,9 @@ CREATE TABLE IF NOT EXISTS follows (
 -- Representa a raquete inteligente (ESP32 + giroscopio + sensor de velocidade da bola).
 -- is_simulated = true ate o hardware real existir; o app usa um gerador de dados mockados
 -- que respeita o mesmo contrato de telemetria desta tabela / rota /sessions/:id/events.
-CREATE TABLE IF NOT EXISTS devices (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS public.dispositivos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.usuarios(id) ON DELETE CASCADE,
   device_name TEXT NOT NULL,
   device_identifier TEXT NOT NULL,
   firmware_version TEXT,
@@ -40,9 +41,9 @@ CREATE TABLE IF NOT EXISTS devices (
   last_sync_at TIMESTAMPTZ
 );
 
-CREATE TABLE IF NOT EXISTS trainings (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+CREATE TABLE IF NOT EXISTS public.treinamentos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  author_id UUID REFERENCES public.usuarios(id) ON DELETE SET NULL,
   title TEXT NOT NULL,
   description TEXT,
   target_audience TEXT NOT NULL DEFAULT 'geral',
@@ -55,11 +56,11 @@ CREATE TABLE IF NOT EXISTS trainings (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS training_sessions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  training_id UUID REFERENCES trainings(id) ON DELETE SET NULL,
-  device_id UUID REFERENCES devices(id) ON DELETE SET NULL,
+CREATE TABLE IF NOT EXISTS public.sessoes_treinamento (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.usuarios(id) ON DELETE CASCADE,
+  training_id UUID REFERENCES public.treinamentos(id) ON DELETE SET NULL,
+  device_id UUID REFERENCES public.dispositivos(id) ON DELETE SET NULL,
   title TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'in_progress',
   started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -74,9 +75,9 @@ CREATE TABLE IF NOT EXISTS training_sessions (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS session_events (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  session_id UUID NOT NULL REFERENCES training_sessions(id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS public.eventos_sessao (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id UUID NOT NULL REFERENCES public.sessoes_treinamento(id) ON DELETE CASCADE,
   event_type TEXT NOT NULL,
   ball_speed_kmh NUMERIC(5,1),
   spin_rate_rpm NUMERIC(6,1),
@@ -84,24 +85,24 @@ CREATE TABLE IF NOT EXISTS session_events (
   occurred_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS session_likes (
-  session_id UUID NOT NULL REFERENCES training_sessions(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS public.curtidas_sessao (
+  session_id UUID NOT NULL REFERENCES public.sessoes_treinamento(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.usuarios(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (session_id, user_id)
 );
 
-CREATE TABLE IF NOT EXISTS session_comments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  session_id UUID NOT NULL REFERENCES training_sessions(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS public.comentarios_sessao (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id UUID NOT NULL REFERENCES public.sessoes_treinamento(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES public.usuarios(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS goals (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS public.metas (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES public.usuarios(id) ON DELETE CASCADE,
   type TEXT NOT NULL,
   title TEXT NOT NULL,
   target_value NUMERIC(10,1) NOT NULL,
@@ -112,14 +113,14 @@ CREATE TABLE IF NOT EXISTS goals (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS glossary_terms (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS public.termos_glossario (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   term TEXT NOT NULL,
   category TEXT NOT NULL,
   short_explanation TEXT NOT NULL,
   sort_order INT NOT NULL DEFAULT 0
 );
 
-CREATE INDEX IF NOT EXISTS idx_sessions_user ON training_sessions(user_id, started_at DESC);
-CREATE INDEX IF NOT EXISTS idx_events_session ON session_events(session_id, occurred_at);
-CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id);
+CREATE INDEX IF NOT EXISTS idx_sessoes_user ON public.sessoes_treinamento(user_id, started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_eventos_session ON public.eventos_sessao(session_id, occurred_at);
+CREATE INDEX IF NOT EXISTS idx_seguimentos_following ON public.seguimentos(following_id);

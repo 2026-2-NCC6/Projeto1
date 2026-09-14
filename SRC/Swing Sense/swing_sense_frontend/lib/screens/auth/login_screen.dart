@@ -17,8 +17,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'demo@swingsense.app');
-  final _passwordController = TextEditingController(text: 'senha123');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   @override
   void dispose() {
@@ -106,19 +106,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceElevated,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    'Conta de demonstracao ja preenchida acima (demo@swingsense.app / senha123) - '
-                    'lembre de rodar o seed do backend antes de testar.',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12, height: 1.4),
                   ),
                 ),
               ],
