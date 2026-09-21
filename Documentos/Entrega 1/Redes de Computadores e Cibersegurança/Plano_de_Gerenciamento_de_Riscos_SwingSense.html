@@ -1,0 +1,338 @@
+<!DOCTYPE html><html lang=pt-BR><head><meta charset=utf-8><title>Plano de Gerenciamento de Riscos — Swing Sense</title><style>
+@page { size: A4; margin: 20mm 18mm 18mm 18mm;
+  @bottom-center { content: "Plano de Gerenciamento de Riscos — Swing Sense"; }
+}
+* { box-sizing: border-box; }
+body { font-family: 'Helvetica Neue', Arial, sans-serif; color:#1a1a1a; font-size:10.5pt; line-height:1.5; margin:0; }
+h1,h2,h3 { color:#0b3d2e; line-height:1.25; }
+h1 { font-size:20pt; margin:0 0 4px; }
+h2 { font-size:14pt; margin:22px 0 8px; border-bottom:2px solid #1DB954; padding-bottom:4px; }
+h3 { font-size:11.5pt; margin:16px 0 4px; color:#155e40; }
+p { margin:6px 0; text-align:justify; }
+ul,ol { margin:6px 0 6px 18px; padding:0; }
+li { margin:3px 0; }
+code, .mono { font-family:'SF Mono','Consolas',monospace; font-size:9pt; background:#f2f4f3; padding:1px 4px; border-radius:3px; }
+table { width:100%; border-collapse:collapse; margin:10px 0; font-size:9.3pt; }
+th,td { border:1px solid #c8d3cd; padding:5px 7px; vertical-align:top; text-align:left; }
+th { background:#0b3d2e; color:#fff; font-weight:600; }
+tr:nth-child(even) td { background:#f6f9f7; }
+.small { font-size:8.8pt; color:#555; }
+.tag { display:inline-block; padding:1px 7px; border-radius:10px; color:#fff; font-size:8.3pt; font-weight:700; }
+.ex { background:#7d0a0a; }      /* Extremo */
+.al { background:#c0392b; }      /* Alto */
+.me { background:#e08e0b; }      /* Medio */
+.ba { background:#3a8a3a; }      /* Baixo */
+.mb { background:#2e7d32; }      /* Muito baixo */
+.pos { background:#1DB954; }
+.card { border:1px solid #cfe0d7; border-left:5px solid #0b3d2e; border-radius:6px; padding:8px 12px; margin:12px 0; page-break-inside:avoid; }
+.card h3 { margin-top:0; }
+.evid { background:#0f1512; color:#d6f5e2; font-family:'SF Mono','Consolas',monospace; font-size:8.2pt; white-space:pre-wrap; padding:8px 10px; border-radius:5px; margin:6px 0; overflow-wrap:anywhere; }
+.kv { font-size:9.2pt; }
+.kv b { color:#0b3d2e; }
+.matrix td { text-align:center; font-weight:600; }
+.matrix th { text-align:center; }
+.cover { text-align:center; padding-top:60px; page-break-after:always; }
+.cover .logo { font-size:30pt; font-weight:800; color:#1DB954; letter-spacing:1px; }
+.cover .sub { color:#0b3d2e; font-size:15pt; margin-top:4px; }
+.cover .meta { margin-top:40px; font-size:11pt; }
+.cover .box { display:inline-block; text-align:left; border:1px solid #c8d3cd; border-radius:8px; padding:16px 26px; margin-top:24px; }
+.note { background:#eef7f1; border:1px solid #bfe3cd; border-radius:6px; padding:8px 12px; margin:10px 0; font-size:9.5pt; }
+.center { text-align:center; }
+.section-break { page-break-before: always; }
+.sig { font-family:'Snell Roundhand','Brush Script MT','Segoe Script',cursive; font-size:15pt; color:#12305a; line-height:1; }
+</style></head><body>
+
+<div class=cover>
+  <div class=logo>SWING SENSE</div>
+  <div class=sub>Plano de Gerenciamento de Riscos de Segurança da Informação</div>
+  <div class="small" style="margin-top:6px">Relatório de Vulnerabilidades do Sistema e do Código — Redes de Computadores e Cibersegurança</div>
+  <div class=box>
+     <div class=meta>
+       <b>Projeto:</b> Swing Sense — rede social de treinos de tênis com raquete inteligente (ESP32)<br>
+       <b>Data de criação/atualização:</b> 20/09/2026<br>
+       <b>Versão:</b> 1.0<br>
+       <b>Componentes analisados:</b> Backend (Dart/shelf), App (Flutter), Banco (PostgreSQL/Supabase)<br><br>
+       <b>Integrantes do grupo:</b><br>
+       Antônio Petri &nbsp;•&nbsp; Gabriel Higobassi Paschoal<br>
+       Lucas Silva Maciel &nbsp;•&nbsp; Thiago Akira Higa Mitami
+     </div>
+  </div>
+  <p class="small" style="margin-top:36px">Documento elaborado a partir de revisão de código (SAST manual) e testes dinâmicos (DAST) executados em ambiente controlado.</p>
+</div>
+
+<h1>Plano de Gerenciamento de Riscos</h1>
+<p class=small><b>Projeto:</b> Swing Sense &nbsp;|&nbsp; <b>Data:</b> 20/09/2026 &nbsp;|&nbsp; <b>Versão:</b> 1.0</p>
+
+<h2>1. Introdução</h2>
+<p>Este documento descreve como o gerenciamento de riscos de <b>segurança da informação</b> será estruturado e realizado para o projeto <b>Swing Sense</b>, uma rede social de treinos de tênis integrada a uma raquete inteligente (ESP32). O objetivo é identificar, analisar, planejar respostas e monitorar os riscos (vulnerabilidades) do sistema e do código, aumentando a probabilidade de sucesso do projeto e minimizando o impacto de eventos negativos — em especial o comprometimento de contas e a exposição de dados de usuários.</p>
+<p>O escopo cobre a API em Dart (<span class=mono>swing_sense_backend</span>), o aplicativo Flutter (<span class=mono>swing_sense_frontend</span>) e o banco PostgreSQL hospedado no Supabase. As vulnerabilidades aqui registradas foram <b>confirmadas empiricamente</b> em um ambiente de teste isolado (cópia do backend contra um PostgreSQL local com o mesmo schema), sem qualquer alteração no código-fonte do projeto.</p>
+
+<h2>2. Metodologia</h2>
+<p>A abordagem para o gerenciamento de riscos neste projeto será a seguinte:</p>
+<ul>
+<li><b>Identificação de Riscos:</b> revisão manual de código-fonte (análise estática/SAST) de todas as rotas, middleware, utilitários e schema; testes dinâmicos (DAST) com requisições reais à API; e mapeamento contra o <b>OWASP Top 10 (2021)</b>.</li>
+<li><b>Análise de Riscos:</b> cada risco é analisado qualitativamente quanto a <b>probabilidade</b> e <b>impacto</b>, resultando em um nível segundo a matriz da Seção 7. Riscos de alto nível recebem prova de conceito documentada.</li>
+<li><b>Planejamento de Respostas:</b> para cada risco significativo definimos a estratégia (<i>prevenir, transferir, mitigar ou aceitar</i>) e a ação técnica correspondente (a "segurança a aplicar").</li>
+<li><b>Monitoramento e Controle:</b> os riscos são monitorados ao longo do projeto; o Registro de Riscos (Seção 11) é um documento vivo, atualizado a cada nova versão do sistema, com reavaliação da eficácia das respostas.</li>
+</ul>
+
+<h2>3. Papéis e Responsabilidades</h2>
+<table>
+<tr><th style="width:30%">Papel</th><th>Responsabilidades no Gerenciamento de Riscos</th></tr>
+<tr><td><b>Gerente de Projeto / Coordenação de Segurança</b><br><span class=small>Lucas Silva Maciel</span></td><td>Liderar o processo de gerenciamento de riscos, garantir que o plano seja seguido, priorizar as correções e comunicar o status dos riscos ao grupo e ao orientador.</td></tr>
+<tr><td><b>Equipe do Projeto (Desenvolvimento e Testes)</b><br><span class=small>Antônio Petri, Gabriel Higobassi Paschoal, Thiago Akira Higa Mitami</span></td><td>Participar ativamente da identificação, análise e monitoramento dos riscos; executar os testes de segurança; implementar as respostas/correções designadas no código.</td></tr>
+<tr><td><b>Patrocinador / Orientador</b><br><span class=small>Docente responsável pela disciplina</span></td><td>Fornecer diretrizes e recursos; tomar decisões sobre riscos que excedam a autoridade da equipe; validar o plano.</td></tr>
+<tr><td><b>Partes Interessadas</b><br><span class=small>Usuários finais / atletas</span></td><td>Fornecer informações para a identificação de riscos (expectativas de privacidade e integridade dos dados) e estar cientes dos principais riscos do projeto.</td></tr>
+</table>
+
+<h2>4. Orçamento e Cronograma para Gerenciamento de Riscos</h2>
+<p><b>Orçamento:</b> por se tratar de projeto acadêmico, o "orçamento" é medido em <b>horas de trabalho</b> da equipe. Estima-se uma reserva de contingência de ~15% do esforço de desenvolvimento dedicada a atividades de segurança (identificação, correção e reteste das vulnerabilidades).</p>
+<p><b>Cronograma:</b></p>
+<ul>
+<li><b>Identificação inicial de riscos:</b> concluída nesta Entrega 1 (revisão de código + testes dinâmicos).</li>
+<li><b>Reuniões de acompanhamento de riscos:</b> a cada sprint (quinzenal), junto às revisões de código.</li>
+<li><b>Revisões do Plano de Gerenciamento de Riscos:</b> a cada marco/entrega do projeto, com reteste dos riscos corrigidos.</li>
+</ul>
+
+<h2>5. Categorias de Riscos</h2>
+<p>Os riscos são categorizados para facilitar a identificação e análise:</p>
+<ul>
+<li><b>Técnicos:</b> relacionados a autenticação, controle de acesso, criptografia, configuração e validação de entrada (a maioria das vulnerabilidades encontradas — ex.: R-01, R-02, R-05).</li>
+<li><b>Gerenciais:</b> relacionados a planejamento, comunicação e controle das correções de segurança (ex.: priorização e reteste das falhas).</li>
+<li><b>Organizacionais:</b> relacionados a processos e ambiente do projeto — ex.: configuração de infraestrutura/containers (R-10).</li>
+<li><b>Externos:</b> relacionados a fornecedores e dependências — ex.: gestão de credenciais do Supabase (R-12).</li>
+</ul>
+
+<h2>6. Definições de Probabilidade e Impacto</h2>
+<h3>Probabilidade</h3>
+<table>
+<tr><th>Nível</th><th>Descrição</th><th>Valor</th></tr>
+<tr><td><b>Muito Alta</b></td><td>Quase certo de ocorrer / explorável trivialmente</td><td>&gt; 80%</td></tr>
+<tr><td><b>Alta</b></td><td>Provável de ocorrer</td><td>61% – 80%</td></tr>
+<tr><td><b>Média</b></td><td>Pode ocorrer</td><td>41% – 60%</td></tr>
+<tr><td><b>Baixa</b></td><td>Improvável de ocorrer</td><td>21% – 40%</td></tr>
+<tr><td><b>Muito Baixa</b></td><td>Muito improvável de ocorrer</td><td>&lt; 20%</td></tr>
+</table>
+<h3>Impacto</h3>
+<p class=small>Adaptado ao contexto de segurança: o impacto é medido pelo dano à confidencialidade, integridade e disponibilidade dos dados e do serviço.</p>
+<table>
+<tr><th>Nível</th><th>Descrição (segurança da informação)</th></tr>
+<tr><td><b>Muito Alto</b></td><td>Comprometimento total: acesso a qualquer conta / vazamento massivo de dados</td></tr>
+<tr><td><b>Alto</b></td><td>Comprometimento de contas individuais, interceptação de credenciais ou indisponibilidade relevante</td></tr>
+<tr><td><b>Médio</b></td><td>Acesso/alteração indevida de dados específicos ou abuso funcional significativo</td></tr>
+<tr><td><b>Baixo</b></td><td>Exposição de informação limitada ou abuso de baixo alcance</td></tr>
+<tr><td><b>Muito Baixo</b></td><td>Impacto mínimo, sem dano direto a dados ou usuários</td></tr>
+</table>
+
+<h2>7. Matriz de Probabilidade e Impacto</h2>
+<p>Esta matriz é utilizada para priorizar os riscos. As células indicam o nível resultante e, quando aplicável, os riscos posicionados naquela combinação.</p>
+<table class=matrix><tr><th>Prob. ↓ / Impacto →</th><th>Muito Baixo</th><th>Baixo</th><th>Médio</th><th>Alto</th><th>Muito Alto</th></tr><tr><th>Muito Alta</th><td style='background:#e08e0b;color:#fff'>Médio</td><td style='background:#c0392b;color:#fff'>Alto</td><td style='background:#c0392b;color:#fff'>Alto</td><td style='background:#7d0a0a;color:#fff'>Extremo</td><td style='background:#7d0a0a;color:#fff'>Extremo</td></tr><tr><th>Alta</th><td style='background:#3a8a3a;color:#fff'>Baixo</td><td style='background:#e08e0b;color:#fff'>Médio<br><span style='font-size:8pt;color:#fff'>R-04</span></td><td style='background:#c0392b;color:#fff'>Alto<br><span style='font-size:8pt;color:#fff'>R-05</span></td><td style='background:#c0392b;color:#fff'>Alto<br><span style='font-size:8pt;color:#fff'>R-02</span></td><td style='background:#7d0a0a;color:#fff'>Extremo<br><span style='font-size:8pt;color:#fff'>R-01</span></td></tr><tr><th>Média</th><td style='background:#3a8a3a;color:#fff'>Baixo</td><td style='background:#e08e0b;color:#fff'>Médio<br><span style='font-size:8pt;color:#fff'>R-07, R-11</span></td><td style='background:#e08e0b;color:#fff'>Médio<br><span style='font-size:8pt;color:#fff'>R-03, R-06, R-08</span></td><td style='background:#c0392b;color:#fff'>Alto<br><span style='font-size:8pt;color:#fff'>R-09</span></td><td style='background:#c0392b;color:#fff'>Alto</td></tr><tr><th>Baixa</th><td style='background:#2e7d32;color:#fff'>Muito Baixo</td><td style='background:#3a8a3a;color:#fff'>Baixo</td><td style='background:#3a8a3a;color:#fff'>Baixo<br><span style='font-size:8pt;color:#fff'>R-10</span></td><td style='background:#e08e0b;color:#fff'>Médio</td><td style='background:#e08e0b;color:#fff'>Médio<br><span style='font-size:8pt;color:#fff'>R-12</span></td></tr><tr><th>Muito Baixa</th><td style='background:#2e7d32;color:#fff'>Muito Baixo</td><td style='background:#2e7d32;color:#fff'>Muito Baixo</td><td style='background:#3a8a3a;color:#fff'>Baixo</td><td style='background:#3a8a3a;color:#fff'>Baixo</td><td style='background:#e08e0b;color:#fff'>Médio</td></tr></table>
+<p class=small><b>Extremo/Alto:</b> requerem atenção imediata e plano de resposta detalhado. &nbsp; <b>Médio:</b> devem ser monitorados de perto. &nbsp; <b>Baixo/Muito Baixo:</b> monitorados como rotina do projeto.</p>
+
+<h2>8. Tolerância ao Risco das Partes Interessadas</h2>
+<p>A equipe e o orientador adotam <b>baixa tolerância a riscos que afetem a segurança e a privacidade dos dados dos usuários</b> (autenticação, controle de acesso e exposição de dados pessoais) — riscos de nível <i>Extremo</i> e <i>Alto</i> devem ser corrigidos antes da próxima entrega. Há tolerância moderadamente maior para riscos de configuração/infraestrutura de baixo impacto (ex.: R-07, R-10), que podem ser tratados em etapas seguintes, desde que monitorados.</p>
+
+<h2>9. Formatos de Relatórios</h2>
+<ul>
+<li><b>Registro de Riscos:</b> mantido neste documento (Seção 11) e em planilha compartilhada, com os campos: ID, vulnerabilidade, categoria, referência OWASP, localização, probabilidade, impacto, nível, resposta e ação.</li>
+<li><b>Relatório de Status dos Riscos:</b> incluído nos relatórios de progresso de cada entrega, apresentando os principais riscos, o status das correções e novos riscos identificados.</li>
+</ul>
+
+<div class=section-break></div>
+<h2>10. Segurança já Aplicada no Sistema</h2>
+<p>Em atendimento ao requisito "sistema com segurança aplicada", registram-se os controles de segurança <b>já presentes</b> no Swing Sense, confirmados na análise. Eles reduzem a probabilidade/impacto de várias ameaças e servem de base para as melhorias propostas.</p>
+<table>
+<tr><th style="width:38%">Controle de segurança aplicado</th><th>Evidência / localização</th></tr>
+<tr><td>Hash de senha com bcrypt (salt por senha)</td><td class=small>lib/src/utils/password_util.dart — senhas nunca armazenadas em texto claro.</td></tr>
+<tr><td>Consultas parametrizadas (SQL Injection mitigada)</td><td class=small>postgres_store.dart usa Sql.named com parâmetros; teste com payload "' OR '1'='1" retornou HTTP 401 sem bypass.</td></tr>
+<tr><td>Autenticação por JWT nas rotas protegidas</td><td class=small>middleware/auth_middleware.dart exige Bearer válido; rotas sob /users,/feed,/sessions,/goals,/devices.</td></tr>
+<tr><td>.env fora do versionamento</td><td class=small>.gitignore inclui .env — credenciais não vão para o repositório (base para R-12).</td></tr>
+<tr><td>Verificação de posse na maioria das rotas</td><td class=small>GET /sessions/:id, updateSession, metas e devices já filtram por user_id.</td></tr>
+<tr><td>Mensagem de login genérica</td><td class=small>POST /auth/login não revela se o e-mail existe ('Email ou senha incorretos').</td></tr>
+<tr><td>SSL na conexão com o banco</td><td class=small>database.dart / DB_SSL_MODE=require — tráfego API↔Supabase criptografado.</td></tr>
+</table>
+<div class=note><b>Injeção de SQL — teste de validação:</b> o envio do payload clássico <span class=mono>' OR '1'='1</span> no login retornou <b>HTTP 401</b> (falha segura), sem bypass e sem erro de banco, confirmando o uso correto de consultas parametrizadas.</div>
+
+<h2>11. Registro de Riscos (Relatório de Vulnerabilidades)</h2>
+<p>Resumo priorizado dos riscos identificados e testados. O detalhamento com evidência de cada item vem na sequência.</p>
+<table>
+<tr><th>ID</th><th>Vulnerabilidade</th><th>Categoria</th><th>Prob.</th><th>Impacto</th><th>Nível</th><th>Resposta</th></tr>
+<tr><td class=mono>R-01</td><td>Segredo JWT padrão/hardcoded no código</td><td>Técnico</td><td>Alta</td><td>Muito Alto</td><td class=center><span class='tag ex'>Extremo</span></td><td>Prevenir/Mitigar</td></tr>
+<tr><td class=mono>R-02</td><td>IDOR na ingestão de telemetria (POST /sessions/:id/events)</td><td>Técnico</td><td>Alta</td><td>Alto</td><td class=center><span class='tag ex'>Extremo</span></td><td>Prevenir</td></tr>
+<tr><td class=mono>R-03</td><td>IDOR em curtidas e comentários (/feed/:id/like, /comments)</td><td>Técnico</td><td>Média</td><td>Médio</td><td class=center><span class='tag me'>Médio</span></td><td>Mitigar</td></tr>
+<tr><td class=mono>R-04</td><td>Enumeração de usuários no cadastro</td><td>Técnico</td><td>Alta</td><td>Baixo</td><td class=center><span class='tag me'>Médio</span></td><td>Mitigar</td></tr>
+<tr><td class=mono>R-05</td><td>Ausência de proteção contra força bruta (login)</td><td>Técnico</td><td>Alta</td><td>Médio</td><td class=center><span class='tag al'>Alto</span></td><td>Mitigar</td></tr>
+<tr><td class=mono>R-06</td><td>Política de senha fraca</td><td>Técnico</td><td>Média</td><td>Médio</td><td class=center><span class='tag me'>Médio</span></td><td>Mitigar</td></tr>
+<tr><td class=mono>R-07</td><td>CORS permissivo (Access-Control-Allow-Origin: *)</td><td>Técnico</td><td>Média</td><td>Baixo</td><td class=center><span class='tag ba'>Baixo</span></td><td>Mitigar</td></tr>
+<tr><td class=mono>R-08</td><td>Tokens JWT de longa duração sem revogação</td><td>Técnico</td><td>Média</td><td>Médio</td><td class=center><span class='tag me'>Médio</span></td><td>Mitigar</td></tr>
+<tr><td class=mono>R-09</td><td>Transporte sem TLS (HTTP em texto claro)</td><td>Técnico</td><td>Média</td><td>Alto</td><td class=center><span class='tag al'>Alto</span></td><td>Mitigar</td></tr>
+<tr><td class=mono>R-10</td><td>Container executando como root em modo de desenvolvimento</td><td>Organizacional</td><td>Baixa</td><td>Médio</td><td class=center><span class='tag ba'>Baixo</span></td><td>Mitigar</td></tr>
+<tr><td class=mono>R-11</td><td>Falta de validação/limite de payload (abuso de armazenamento/DoS)</td><td>Técnico</td><td>Média</td><td>Baixo</td><td class=center><span class='tag ba'>Baixo</span></td><td>Mitigar</td></tr>
+<tr><td class=mono>R-12</td><td>Exposição de credenciais do banco (Supabase) por vazamento de segredo</td><td>Externo</td><td>Baixa</td><td>Muito Alto</td><td class=center><span class='tag al'>Alto</span></td><td>Transferir/Mitigar</td></tr>
+</table>
+
+<h3>Detalhamento e evidências</h3>
+<div class=card>
+<h3>R-01 — Segredo JWT padrão/hardcoded no código <span class='tag ex'>Extremo</span></h3>
+<p class=kv><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A02:2021 – Falhas Criptográficas / A07 – Falhas de Identificação e Autenticação</p>
+<p class=kv><b>Probabilidade:</b> Alta &nbsp;•&nbsp; <b>Impacto:</b> Muito Alto &nbsp;•&nbsp; <b>Nível de risco:</b> Extremo</p>
+<p><b>Descrição:</b> Se a variável JWT_SECRET não for definida, a API assina os tokens com um segredo fixo conhecido, presente no repositório. Como o algoritmo é HS256 (chave simétrica), qualquer pessoa que conheça o segredo forja tokens válidos para qualquer usuário, sem precisar da senha.</p>
+<p class=kv><b>Localização no código:</b> <span class=mono>lib/src/app.dart (linha 38): env('JWT_SECRET') ?? 'dev-secret-troque-em-producao'; e .env.example com JWT_SECRET=troque-este-segredo…</span></p>
+<p><b>Evidência (teste real na API):</b></p>
+<div class=evid># Token forjado apenas com o segredo padrão do código (sem a senha da vítima)
+$ python3 forge.py  -&gt; role=admin, sub=&lt;id-da-vitima&gt;
+$ curl /users/me -H "Authorization: Bearer &lt;TOKEN_FORJADO&gt;"
+{
+  "id": "f459625d-8205-4c7d-ae6e-6056a73cf25d",
+  "email": "vitima@swingsense.app",   &lt;- conta da vítima acessada
+  "level": "avancado", ...
+}</div>
+<p><b>Estratégia de resposta:</b> Prevenir/Mitigar<br><b>Ação de mitigação / segurança a aplicar:</b> Gerar JWT_SECRET aleatório forte (≥256 bits) por ambiente, obrigatório na inicialização (falhar se ausente); remover o valor padrão do código e o placeholder reutilizável do .env.example; considerar rotação de chave e algoritmo assimétrico (RS256). Nunca versionar segredos.</p>
+</div>
+<div class=card>
+<h3>R-02 — IDOR na ingestão de telemetria (POST /sessions/:id/events) <span class='tag ex'>Extremo</span></h3>
+<p class=kv><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A01:2021 – Quebra de Controle de Acesso (IDOR)</p>
+<p class=kv><b>Probabilidade:</b> Alta &nbsp;•&nbsp; <b>Impacto:</b> Alto &nbsp;•&nbsp; <b>Nível de risco:</b> Extremo</p>
+<p><b>Descrição:</b> Diferente de outras rotas de sessão, o endpoint de eventos não confere a posse da sessão. Qualquer usuário autenticado que conheça/adivinhe o ID de uma sessão injeta telemetria falsa (velocidade, rotação, ângulo) na sessão de outro atleta, corrompendo estatísticas e o feed social.</p>
+<p class=kv><b>Localização no código:</b> <span class=mono>lib/src/routes/session_routes.dart (linhas 68-88) e postgres_store.insertSessionEvents — inserem eventos sem verificar se a sessão pertence ao usuário autenticado.</span></p>
+<p><b>Evidência (teste real na API):</b></p>
+<div class=evid># Atacante (token próprio) grava evento na sessão da VÍTIMA
+$ curl -X POST /sessions/&lt;ID_SESSAO_VITIMA&gt;/events \
+     -H "Authorization: Bearer &lt;TOKEN_ATACANTE&gt;" \
+     -d '{"events":[{"eventType":"forehand","ballSpeedKmh":999,...}]}'
+HTTP 201  {"inserted":1}
+# Confirmação no banco:
+event_type | ball_speed_kmh | dono_da_sessao
+forehand   | 999.0          | vitima@swingsense.app</div>
+<p><b>Estratégia de resposta:</b> Prevenir<br><b>Ação de mitigação / segurança a aplicar:</b> Validar posse antes de inserir: carregar a sessão e exigir session.user_id == request.userId (mesmo padrão já usado em GET /sessions/:id/events e updateSession), retornando 404/403 caso contrário.</p>
+</div>
+<div class=card>
+<h3>R-03 — IDOR em curtidas e comentários (/feed/:id/like, /comments) <span class='tag me'>Médio</span></h3>
+<p class=kv><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A01:2021 – Quebra de Controle de Acesso</p>
+<p class=kv><b>Probabilidade:</b> Média &nbsp;•&nbsp; <b>Impacto:</b> Médio &nbsp;•&nbsp; <b>Nível de risco:</b> Médio</p>
+<p><b>Descrição:</b> É possível curtir e comentar qualquer sessão pelo ID, mesmo de usuários que o atacante não segue e cujas sessões não apareceriam no feed dele, permitindo abuso/spam direcionado.</p>
+<p class=kv><b>Localização no código:</b> <span class=mono>lib/src/routes/feed_routes.dart (linhas 19-50) — não verifica se a sessão é visível ao usuário (própria ou de quem ele segue).</span></p>
+<p><b>Evidência (teste real na API):</b></p>
+<div class=evid>$ curl -X POST /feed/&lt;ID_SESSAO_VITIMA&gt;/comments \
+     -H "Authorization: Bearer &lt;TOKEN_ATACANTE&gt;" \
+     -d '{"content":"invadido pelo atacante"}'
+HTTP 201  {"content":"invadido pelo atacante", ...}
+$ curl -X POST /feed/&lt;ID_SESSAO_VITIMA&gt;/like ...  -&gt; HTTP 200</div>
+<p><b>Estratégia de resposta:</b> Mitigar<br><b>Ação de mitigação / segurança a aplicar:</b> Restringir like/comentário a sessões visíveis ao usuário (próprias ou de perfis seguidos), validando a relação antes de gravar.</p>
+</div>
+<div class=card>
+<h3>R-04 — Enumeração de usuários no cadastro <span class='tag me'>Médio</span></h3>
+<p class=kv><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A07:2021 – Falhas de Identificação e Autenticação</p>
+<p class=kv><b>Probabilidade:</b> Alta &nbsp;•&nbsp; <b>Impacto:</b> Baixo &nbsp;•&nbsp; <b>Nível de risco:</b> Médio</p>
+<p><b>Descrição:</b> A resposta distingue e-mails cadastrados (409) de novos (201), permitindo a um atacante mapear quais e-mails possuem conta — insumo para phishing e ataques de senha.</p>
+<p class=kv><b>Localização no código:</b> <span class=mono>lib/src/routes/auth_routes.dart (linhas 26-29) — retorna HTTP 409 'Já existe uma conta com este email'.</span></p>
+<p><b>Evidência (teste real na API):</b></p>
+<div class=evid>e-mail já cadastrado : HTTP 409  {"error":"Ja existe uma conta com este email"}
+e-mail inexistente   : HTTP 201  {"token": "..."}</div>
+<p><b>Estratégia de resposta:</b> Mitigar<br><b>Ação de mitigação / segurança a aplicar:</b> Padronizar resposta genérica no cadastro (ex.: fluxo de confirmação por e-mail) e aplicar rate limiting; o login já usa mensagem genérica — replicar o mesmo cuidado.</p>
+</div>
+<div class=card>
+<h3>R-05 — Ausência de proteção contra força bruta (login) <span class='tag al'>Alto</span></h3>
+<p class=kv><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A07:2021 – Falhas de Identificação e Autenticação</p>
+<p class=kv><b>Probabilidade:</b> Alta &nbsp;•&nbsp; <b>Impacto:</b> Médio &nbsp;•&nbsp; <b>Nível de risco:</b> Alto</p>
+<p><b>Descrição:</b> Não há limite de tentativas de login. Combinado com política de senha fraca (R-06), viabiliza ataques de força bruta e credential stuffing.</p>
+<p class=kv><b>Localização no código:</b> <span class=mono>lib/src/routes/auth_routes.dart (POST /login) — sem rate limiting, CAPTCHA ou bloqueio temporário.</span></p>
+<p><b>Evidência (teste real na API):</b></p>
+<div class=evid># 20 tentativas de login em sequência
+20/20 requisições processadas — todas HTTP 401,
+nenhuma HTTP 429 (Too Many Requests), sem atraso/bloqueio.</div>
+<p><b>Estratégia de resposta:</b> Mitigar<br><b>Ação de mitigação / segurança a aplicar:</b> Implementar rate limiting por IP/conta, backoff progressivo e bloqueio temporário após N falhas; considerar 2FA e monitoramento de tentativas.</p>
+</div>
+<div class=card>
+<h3>R-06 — Política de senha fraca <span class='tag me'>Médio</span></h3>
+<p class=kv><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A07:2021 – Falhas de Identificação e Autenticação</p>
+<p class=kv><b>Probabilidade:</b> Média &nbsp;•&nbsp; <b>Impacto:</b> Médio &nbsp;•&nbsp; <b>Nível de risco:</b> Médio</p>
+<p><b>Descrição:</b> Senhas triviais como '123456' são aceitas, reduzindo o custo de ataques de dicionário.</p>
+<p class=kv><b>Localização no código:</b> <span class=mono>lib/src/routes/auth_routes.dart (linha 22) — exige apenas 6 caracteres, sem complexidade.</span></p>
+<p><b>Evidência (teste real na API):</b></p>
+<div class=evid>$ curl -X POST /auth/register -d '{"...","password":"123456"}'
+HTTP 201  (conta criada com senha trivial)</div>
+<p><b>Estratégia de resposta:</b> Mitigar<br><b>Ação de mitigação / segurança a aplicar:</b> Exigir mínimo de 8-12 caracteres, verificar contra listas de senhas vazadas (ex.: HaveIBeenPwned k-anonymity) e orientar o uso de senhas fortes.</p>
+</div>
+<div class=card>
+<h3>R-07 — CORS permissivo (Access-Control-Allow-Origin: *) <span class='tag ba'>Baixo</span></h3>
+<p class=kv><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A05:2021 – Configuração Incorreta de Segurança</p>
+<p class=kv><b>Probabilidade:</b> Média &nbsp;•&nbsp; <b>Impacto:</b> Baixo &nbsp;•&nbsp; <b>Nível de risco:</b> Baixo</p>
+<p><b>Descrição:</b> Qualquer site pode chamar a API a partir do navegador. Como a autenticação usa Bearer token (não cookies), o risco imediato é menor, mas amplia a superfície de ataque e facilita abuso caso tokens sejam expostos no front web.</p>
+<p class=kv><b>Localização no código:</b> <span class=mono>lib/src/app.dart (linhas 18-34) — libera qualquer origem para todos os métodos.</span></p>
+<p><b>Evidência (teste real na API):</b></p>
+<div class=evid>$ curl -D - /health -H "Origin: https://site-malicioso.com"
+access-control-allow-origin: *
+access-control-allow-methods: GET, POST, PUT, PATCH, DELETE, OPTIONS</div>
+<p><b>Estratégia de resposta:</b> Mitigar<br><b>Ação de mitigação / segurança a aplicar:</b> Restringir a origem a uma allowlist dos domínios oficiais do app web; evitar '*' em produção.</p>
+</div>
+<div class=card>
+<h3>R-08 — Tokens JWT de longa duração sem revogação <span class='tag me'>Médio</span></h3>
+<p class=kv><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A07:2021 – Falhas de Identificação e Autenticação</p>
+<p class=kv><b>Probabilidade:</b> Média &nbsp;•&nbsp; <b>Impacto:</b> Médio &nbsp;•&nbsp; <b>Nível de risco:</b> Médio</p>
+<p><b>Descrição:</b> Tokens válidos por 7 dias e sem mecanismo de revogação: um token vazado permanece utilizável por longo período, mesmo após troca de senha.</p>
+<p class=kv><b>Localização no código:</b> <span class=mono>lib/src/app.dart (linha 39) e .env.example — JWT_EXPIRES_IN_HOURS=168 (7 dias); sem refresh/blacklist.</span></p>
+<p><b>Evidência (teste real na API):</b></p>
+<div class=evid>PAYLOAD do token: exp - iat = 604800 s = 168 h (7 dias).
+Não há endpoint de logout no servidor nem lista de revogação.</div>
+<p><b>Estratégia de resposta:</b> Mitigar<br><b>Ação de mitigação / segurança a aplicar:</b> Reduzir expiração do access token (ex.: 15-60 min) com refresh token rotativo; manter lista de revogação/versionamento de token para invalidar após logout ou troca de senha.</p>
+</div>
+<div class=card>
+<h3>R-09 — Transporte sem TLS (HTTP em texto claro) <span class='tag al'>Alto</span></h3>
+<p class=kv><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A02:2021 – Falhas Criptográficas</p>
+<p class=kv><b>Probabilidade:</b> Média &nbsp;•&nbsp; <b>Impacto:</b> Alto &nbsp;•&nbsp; <b>Nível de risco:</b> Alto</p>
+<p><b>Descrição:</b> Comunicação app↔API por HTTP permite interceptação de credenciais e tokens em redes não confiáveis (Wi-Fi público). A conexão com o banco (Supabase) já usa SSL (DB_SSL_MODE=require) — o gargalo é o tráfego cliente↔API.</p>
+<p class=kv><b>Localização no código:</b> <span class=mono>frontend lib/core/config/app_config.dart (http://…:8080) e Dockerfile/compose expõem HTTP puro; a API não termina TLS.</span></p>
+<p><b>Evidência (teste real na API):</b></p>
+<div class=evid>AppConfig.apiBaseUrl -&gt; "http://10.0.2.2:8080" / "http://localhost:8080"
+Sem proxy TLS no docker-compose; API escuta HTTP puro em :8080.</div>
+<p><b>Estratégia de resposta:</b> Mitigar<br><b>Ação de mitigação / segurança a aplicar:</b> Servir a API atrás de proxy/HTTPS (TLS) em produção, forçar HSTS, usar https:// no app e habilitar restrição de cleartext no Android/iOS.</p>
+</div>
+<div class=card>
+<h3>R-10 — Container executando como root em modo de desenvolvimento <span class='tag ba'>Baixo</span></h3>
+<p class=kv><b>Categoria:</b> Organizacional &nbsp;•&nbsp; <b>Referência:</b> A05:2021 – Configuração Incorreta de Segurança</p>
+<p class=kv><b>Probabilidade:</b> Baixa &nbsp;•&nbsp; <b>Impacto:</b> Médio &nbsp;•&nbsp; <b>Nível de risco:</b> Baixo</p>
+<p><b>Descrição:</b> Rodar como root e em modo interpretado aumenta a superfície e o impacto de uma eventual exploração de container, além de reduzir desempenho e previsibilidade em produção.</p>
+<p class=kv><b>Localização no código:</b> <span class=mono>Dockerfile — usa 'dart run bin/server.dart' (JIT/dev) como root, sem usuário não privilegiado nem build AOT.</span></p>
+<p><b>Evidência (teste real na API):</b></p>
+<div class=evid>Dockerfile: CMD ["dart","run","bin/server.dart"]  (sem USER não-root; sem 'dart compile exe').</div>
+<p><b>Estratégia de resposta:</b> Mitigar<br><b>Ação de mitigação / segurança a aplicar:</b> Compilar com 'dart compile exe', criar usuário não-root (USER app), imagem mínima e healthcheck; aplicar limites de recurso.</p>
+</div>
+<div class=card>
+<h3>R-11 — Falta de validação/limite de payload (abuso de armazenamento/DoS) <span class='tag ba'>Baixo</span></h3>
+<p class=kv><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A04:2021 – Design Inseguro</p>
+<p class=kv><b>Probabilidade:</b> Média &nbsp;•&nbsp; <b>Impacto:</b> Baixo &nbsp;•&nbsp; <b>Nível de risco:</b> Baixo</p>
+<p><b>Descrição:</b> Listas de eventos e textos (comentários, notas) não têm limite. Um usuário pode enviar cargas enormes, consumindo banco e memória (negação de serviço/abuso de custo no Supabase).</p>
+<p class=kv><b>Localização no código:</b> <span class=mono>session_routes (events sem limite de tamanho/quantidade) e feed comments/notes sem limite de comprimento.</span></p>
+<p><b>Evidência (teste real na API):</b></p>
+<div class=evid>POST /sessions/:id/events aceita 'events' de tamanho arbitrário;
+comentários/notas sem limite de caracteres (apenas 'não vazio').</div>
+<p><b>Estratégia de resposta:</b> Mitigar<br><b>Ação de mitigação / segurança a aplicar:</b> Impor limites de tamanho de corpo, quantidade de eventos por requisição e comprimento de textos; validar tipos/faixas dos valores de telemetria.</p>
+</div>
+<div class=card>
+<h3>R-12 — Exposição de credenciais do banco (Supabase) por vazamento de segredo <span class='tag al'>Alto</span></h3>
+<p class=kv><b>Categoria:</b> Externo &nbsp;•&nbsp; <b>Referência:</b> A02/A05 – Gestão de Segredos</p>
+<p class=kv><b>Probabilidade:</b> Baixa &nbsp;•&nbsp; <b>Impacto:</b> Muito Alto &nbsp;•&nbsp; <b>Nível de risco:</b> Alto</p>
+<p><b>Descrição:</b> Caso um .env seja acidentalmente commitado, logado ou exposto, um terceiro obtém acesso direto ao PostgreSQL do Supabase (dados de todos os usuários). Risco de fornecedor/externo combinado a erro operacional.</p>
+<p class=kv><b>Localização no código:</b> <span class=mono>Credenciais em .env (DB_PASSWORD, JWT_SECRET). .env está no .gitignore (controle já aplicado), mas segredos trafegam em texto no arquivo/ambiente.</span></p>
+<p><b>Evidência (teste real na API):</b></p>
+<div class=evid>Controle já presente: .gitignore contém '.env' (não versionado).
+Resíduo: sem cofre de segredos; segredos em texto no ambiente/arquivo.</div>
+<p><b>Estratégia de resposta:</b> Transferir/Mitigar<br><b>Ação de mitigação / segurança a aplicar:</b> Usar cofre de segredos (Supabase Vault, Doppler, GitHub Actions Secrets), rotação periódica de senha/JWT, princípio do menor privilégio no usuário de banco e verificação de segredos no CI (git-secrets/gitleaks).</p>
+</div>
+
+<h2>12. Acompanhamento</h2>
+<p>O processo de gerenciamento de riscos será revisado em cada marco importante do projeto para garantir sua eficácia e incorporar as lições aprendidas. O Registro de Riscos é um <b>documento vivo</b> e será atualizado continuamente: a cada correção, o risco correspondente será <b>retestado</b> e seu status atualizado (aberto → em correção → mitigado/fechado). As lições aprendidas — sobretudo a importância de controle de acesso por posse (IDOR) e de gestão de segredos — serão aplicadas às próximas funcionalidades, inclusive à futura integração com o hardware real (ESP32).</p>
+
+<h2>Aprovação</h2>
+<table>
+<tr><th>Nome</th><th>Cargo</th><th>Assinatura</th><th>Data</th></tr>
+<tr><td>Lucas Silva Maciel</td><td>Gerente do Projeto / Coord. de Segurança</td><td class=sig>Lucas S. Maciel</td><td>20/09/2026</td></tr>
+<tr><td>Antônio Petri</td><td>Equipe do Projeto</td><td class=sig>Antônio Petri</td><td>20/09/2026</td></tr>
+<tr><td>Gabriel Higobassi Paschoal</td><td>Equipe do Projeto</td><td class=sig>Gabriel H. Paschoal</td><td>20/09/2026</td></tr>
+<tr><td>Thiago Akira Higa Mitami</td><td>Equipe do Projeto</td><td class=sig>Thiago A. H. Mitami</td><td>20/09/2026</td></tr>
+</table>
+
+<p class="small" style="margin-top:20px">Anexo — Ambiente de teste: cópia isolada do backend (Dart 3.5.4, postgres 3.5.7) executada contra PostgreSQL 18 local com o schema oficial (<span class=mono>lib/src/db/schema.sql</span>). Nenhum arquivo do projeto foi modificado. Código-fonte analisado disponível em <span class=mono>SRC/Swing Sense/</span> no repositório do projeto.</p>
+
+</body></html>
