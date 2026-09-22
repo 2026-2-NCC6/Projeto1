@@ -1,22 +1,32 @@
 /*
-  PASSO 2 — Máquina de estados: detectar e classificar a tacada
+  PASSO 2 (RECALIBRADO) — Máquina de estados: detectar e classificar a tacada
 
-  Continua de onde o Passo 1 parou. A diferença é que agora, em vez de
-  só imprimir os valores brutos, o código observa a aceleração e o giro
-  pra decidir em que "fase" do movimento a raquete está:
+  Atualizado a partir da coleta de dados rotulados (6 amostras de cada tipo,
+  sensor fixado rigidamente na ponta inferior do cabo). A regra de
+  classificação mudou em relação à versão original:
+
+  DESCOBERTA: com o sensor nessa posição, accZ e giroZ (usados na regra
+  original) NÃO separam bem os golpes. Quem separa é:
+    - accX  -> separa BACKHAND dos demais (backhand tem accX bem mais alto)
+    - giroX -> dentro do que não é backhand, separa FOREHAND de SAQUE
+
+  IMPORTANTE: essa regra foi calibrada com só 6 amostras por tipo. Antes de
+  considerar definitiva, colete mais dados (10-15 de cada tipo, com
+  intensidades variadas) e confira se os limiares ainda se sustentam,
+  principalmente o limiar de giroX perto de zero (é onde forehand e saque
+  mais se confundem nos dados atuais).
+
+  Continua usando a mesma máquina de estados de sempre:
 
       PARADO --(giro sustentado)--> PREPARACAO --(pico de aceleração)--> IMPACTO
         ^                                                                   |
         |                                                                   v
         +-------------------------- RECUPERACAO <--------------------------+
-                        (aceleração estabiliza)
 
-  No instante do IMPACTO, guardamos os valores do sensor e classificamos
-  o golpe (regra simples: orientação da raquete no pico).
-
-  IMPORTANTE: os limiares (LIMIAR_...) abaixo são um ponto de partida.
-  Quase certeza que você vai precisar ajustar eles testando na prática
-  (ver seção "COMO CALIBRAR" no fim do arquivo).
+  Só que agora, no cruzamento do limiar de impacto, o código abre uma janela
+  curta (25ms) e guarda o PICO real de aceleração dentro dela — em vez de
+  usar a primeira amostra que cruzou o limiar — pra reduzir ruído e evitar
+  classificar com base num valor de transição.
 */
 
 #include <Adafruit_MPU6050.h>
@@ -35,20 +45,25 @@ enum EstadoTacada {
 
 EstadoTacada estadoAtual = PARADO;
 
-// ---------- Limiares (AJUSTE conforme calibração) ----------
-const float LIMIAR_GIRO_PREPARACAO      = 1.5;   // rad/s  - rotação que indica início do movimento
-const float LIMIAR_ACEL_IMPACTO         = 20.0;  // m/s²   - pico de aceleração no momento da batida
-const float LIMIAR_ACEL_ESTAVEL         = 12.0;  // m/s²   - "quase parado de novo" (perto da gravidade ~9.8)
-const unsigned long TIMEOUT_PREPARACAO      = 1000; // ms - se preparar e não bater, cancela
-const unsigned long TEMPO_ESTAVEL_RECUPERACAO = 150; // ms - tempo estável pra confirmar fim do golpe
-const unsigned long TIMEOUT_RECUPERACAO_SEG  = 2000; // ms - trava de segurança pra não ficar preso no estado
+// ---------- Limiares de transição de estado (sem mudança) ----------
+const float LIMIAR_GIRO_PREPARACAO      = 1.5;   // rad/s
+const float LIMIAR_ACEL_IMPACTO         = 20.0;  // m/s²
+const float LIMIAR_ACEL_ESTAVEL         = 13.5;  // m/s²
+const unsigned long TIMEOUT_PREPARACAO      = 1000; // ms
+const unsigned long TEMPO_ESTAVEL_RECUPERACAO = 150; // ms
+const unsigned long TIMEOUT_RECUPERACAO_SEG  = 2000; // ms
+const unsigned long JANELA_PICO_MS           = 25;   // ms
+
+// ---------- Limiares de CLASSIFICAÇÃO (novos, calibrados com dado real) ----------
+// ⚠️ Calibrados com n=6 por classe — revisar com mais amostras.
+const float LIMIAR_ACCX_BACKHAND = 15.0;  // acima disso -> BACKHAND
 
 unsigned long marcaTempo = 0;
 unsigned long tempoEstavelDesde = 0;
 
-// Dados guardados no instante do impacto, usados pra classificar
-float accelZ_noImpacto = 0;
-float giroZ_noImpacto  = 0;
+// Valores dos 6 eixos capturados no pico da janela de impacto
+float accX_pico, accY_pico, accZ_pico;
+float giroX_pico, giroY_pico, giroZ_pico;
 
 void setup() {
   Serial.begin(115200);
@@ -72,7 +87,7 @@ void setup() {
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
 
   delay(100);
-  Serial.println("Máquina de estados pronta. Balance a raquete pra testar!");
+  Serial.println("Máquina de estados pronta (regra de classificação recalibrada).");
 }
 
 void loop() {
@@ -101,22 +116,18 @@ void loop() {
 
     case PREPARACAO:
       if (accelMag > LIMIAR_ACEL_IMPACTO) {
-        // Guarda os dados do instante do golpe ANTES de mudar de estado
-        accelZ_noImpacto = a.acceleration.z;
-        giroZ_noImpacto  = g.gyro.z;
+        capturarJanelaDePico(accelMag);
 
         estadoAtual = IMPACTO;
         marcaTempo = agora;
         classificarTacada();
       } else if (agora - marcaTempo > TIMEOUT_PREPARACAO) {
-        // Girou mas não bateu a tempo -> cancela e volta
         estadoAtual = PARADO;
         Serial.println(">> Cancelado (girou mas não impactou), voltando pro PARADO");
       }
       break;
 
     case IMPACTO:
-      // Estado é só um "flash" -- já emenda pra recuperação
       estadoAtual = RECUPERACAO;
       marcaTempo = agora;
       tempoEstavelDesde = 0;
@@ -131,44 +142,69 @@ void loop() {
           Serial.println(">> PARADO (pronto pra próxima tacada)\n");
         }
       } else {
-        tempoEstavelDesde = 0; // ainda balançando muito, reseta a contagem
+        tempoEstavelDesde = 0;
       }
 
-      // Trava de segurança: nunca fica preso indefinidamente num estado
       if (agora - marcaTempo > TIMEOUT_RECUPERACAO_SEG) {
         estadoAtual = PARADO;
       }
       break;
   }
 
-  // Descomente as linhas abaixo pra ver os valores brutos enquanto calibra os limiares:
-  Serial.print("accelMag: "); Serial.print(accelMag);
-  Serial.print("  giroMag: "); Serial.println(giroMag);
+  delay(10);
+}
 
-  delay(10); // ~100 leituras/segundo -- mais rápido que o Passo 1, pra não perder o pico do impacto
+// Guarda o pico real de aceleração (e os 6 eixos correspondentes) dentro de
+// uma janela curta após o cruzamento do limiar, em vez de usar a primeira
+// amostra que cruzou — reduz o efeito de ruído na leitura usada pra classificar.
+void capturarJanelaDePico(float accelMagInicial) {
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+
+  accX_pico = a.acceleration.x;
+  accY_pico = a.acceleration.y;
+  accZ_pico = a.acceleration.z;
+  giroX_pico = g.gyro.x;
+  giroY_pico = g.gyro.y;
+  giroZ_pico = g.gyro.z;
+  float picoAccelMag = accelMagInicial;
+
+  unsigned long inicioJanela = millis();
+  while (millis() - inicioJanela < JANELA_PICO_MS) {
+    mpu.getEvent(&a, &g, &temp);
+    float mag = sqrt(a.acceleration.x * a.acceleration.x +
+                      a.acceleration.y * a.acceleration.y +
+                      a.acceleration.z * a.acceleration.z);
+    if (mag > picoAccelMag) {
+      picoAccelMag = mag;
+      accX_pico = a.acceleration.x;
+      accY_pico = a.acceleration.y;
+      accZ_pico = a.acceleration.z;
+      giroX_pico = g.gyro.x;
+      giroY_pico = g.gyro.y;
+      giroZ_pico = g.gyro.z;
+    }
+  }
 }
 
 void classificarTacada() {
-  Serial.print(">> TACADA DETECTADA!  accelZ=");
-  Serial.print(accelZ_noImpacto);
-  Serial.print("  giroZ=");
-  Serial.print(giroZ_noImpacto);
+  Serial.print(">> TACADA DETECTADA!  accX=");
+  Serial.print(accX_pico);
+  Serial.print("  accZ=");
+  Serial.print(accZ_pico);
+  Serial.print("  giroX=");
+  Serial.print(giroX_pico);
 
-  // Regra simples (igual à ideia da arquitetura): orientação da raquete no pico.
-  // - Se accelZ ficou baixo/negativo no impacto -> raquete estava mais "na vertical"
-  //   (braço acima da cabeça) -> SAQUE
-  // - Senão, foi um golpe horizontal -> usa o giro em Z pra decidir forehand ou backhand
-  //
-  // Esses números (3.0, sinal do giroZ) são só um chute inicial -- ajuste depois
-  // de olhar os valores reais que aparecem no Monitor Serial durante os testes.
-
+  // Regra recalibrada com dados reais (ver cabeçalho do arquivo):
+  //  1) accX alto isola o BACKHAND (sem sobreposição nos dados coletados)
+  //  2) dentro do que sobra, o sinal de giroX separa FOREHAND de SAQUE
   String tipo;
-  if (accelZ_noImpacto < 3.0) {
-    tipo = "SAQUE";
-  } else if (giroZ_noImpacto > 0) {
-    tipo = "FOREHAND";
-  } else {
+  if (accX_pico > LIMIAR_ACCX_BACKHAND) {
     tipo = "BACKHAND";
+  } else if (giroX_pico > 0) {
+    tipo = "SAQUE";
+  } else {
+    tipo = "FOREHAND";
   }
 
   Serial.print("  => Tipo: ");
@@ -176,24 +212,14 @@ void classificarTacada() {
 }
 
 /*
-  COMO CALIBRAR OS LIMIARES:
-
-  1. Descomente as duas linhas de debug dentro do loop() (accelMag / giroMag).
-  2. Abra o Monitor Serial e observe:
-     - Com a raquete parada na mesa: accelMag deve ficar perto de 9.8, giroMag perto de 0.
-     - Fazendo um gesto de preparação (girando o pulso) sem bater: veja até quanto giroMag sobe.
-     - Fazendo uma "tacada" de verdade: veja o pico de accelMag no momento do impacto.
-  3. Ajuste LIMIAR_GIRO_PREPARACAO e LIMIAR_ACEL_IMPACTO com base nesses valores reais
-     (normalmente um pouco abaixo do pico observado, pra não perder golpes mais fracos,
-     mas acima do "ruído" de quando está parado ou só andando com a raquete na mão).
-  4. Recomente as linhas de debug depois de calibrar, pra não poluir a saída.
-  5. Teste os 3 tipos de golpe (saque, forehand, backhand) várias vezes e confira se
-     a classificação bate. Ajuste a regra em classificarTacada() se necessário --
-     por exemplo, pode ser melhor usar o eixo X ou Y do giro em vez do Z, dependendo
-     de como o sensor fica orientado quando fixado no punho da raquete.
-
-  PRÓXIMO PASSO (depois que a classificação estiver satisfatória):
-  Trocar os Serial.println() por envio via Bluetooth (BLE) pro app mobile,
-  usando a biblioteca NimBLE-Arduino -- é o que a arquitetura do projeto define
-  pra comunicação raquete -> app.
+  PRÓXIMOS PASSOS:
+  1. Coletar mais amostras (10-15 por tipo, com força variada) usando o
+     sketch passo2b_coleta_calibracao.ino e conferir se os limiares
+     (accX > 15.0, giroX > 0) continuam separando bem.
+  2. Prestar atenção especial nas tacadas com giroX perto de zero — é a
+     zona onde forehand e saque mais se confundiram nos dados atuais.
+  3. Investigar a amostra de backhand com accX=117.77 (bem acima das
+     outras) — golpe mais forte de propósito, ou possível ruído/artefato?
+  4. Depois de validar, migrar Serial.println() para envio via BLE
+     (NimBLE-Arduino), conforme o Passo 3 já planejado.
 */
