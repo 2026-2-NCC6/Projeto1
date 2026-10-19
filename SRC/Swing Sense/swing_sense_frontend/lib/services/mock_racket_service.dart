@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import '../models/session_event.dart';
+import 'racket_source.dart';
 
 /// Simula a raquete inteligente (ESP32 + giroscopio + sensor de velocidade da
 /// bola) enquanto o hardware real nao esta pronto. Gera eventos de tacada em
@@ -12,24 +13,28 @@ import '../models/session_event.dart';
 /// que exponha o mesmo `Stream<SessionEvent> events` (ex.: lendo notificacoes
 /// BLE do ESP32) e troque a instancia usada na tela de sessao ao vivo - nada
 /// mais no app precisa mudar.
-class MockRacketService {
+class MockRacketService implements RacketSource {
   final _controller = StreamController<SessionEvent>.broadcast();
   final _random = Random();
   Timer? _timer;
   bool get isRunning => _timer != null;
 
+  @override
   Stream<SessionEvent> get events => _controller.stream;
 
+  @override
   void start() {
     stop();
     _timer = Timer.periodic(const Duration(milliseconds: 1800), (_) => _emitShot());
   }
 
+  @override
   void stop() {
     _timer?.cancel();
     _timer = null;
   }
 
+  @override
   void dispose() {
     stop();
     _controller.close();

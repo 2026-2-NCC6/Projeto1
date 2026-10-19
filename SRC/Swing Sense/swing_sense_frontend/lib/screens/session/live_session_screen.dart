@@ -4,15 +4,22 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../models/session_event.dart';
+import '../../models/tacada.dart';
 import '../../models/training_session.dart';
 import '../../services/api_client.dart';
+import '../../services/ble/ble_racket_service.dart';
+import '../../services/racket_source.dart';
+import '../../services/tacada_sync_service.dart';
 import '../../services/mock_racket_service.dart';
 import '../../services/session_service.dart';
 import 'session_summary_screen.dart';
 
 class LiveSessionScreen extends StatefulWidget {
-  const LiveSessionScreen({super.key, required this.session});
+  const LiveSessionScreen({super.key, required this.session, this.useRealRacket = false});
   final TrainingSession session;
+
+  /// true = tacadas vindas da raquete real por BLE; false = raquete simulada.
+  final bool useRealRacket;
 
   @override
   State<LiveSessionScreen> createState() => _LiveSessionScreenState();
@@ -20,7 +27,8 @@ class LiveSessionScreen extends StatefulWidget {
 
 class _LiveSessionScreenState extends State<LiveSessionScreen> {
   final _sessionService = SessionService(ApiClient.instance);
-  final _racket = MockRacketService();
+  late final RacketSource _racket = widget.useRealRacket ? BleRacketService.instance : MockRacketService();
+  StreamSubscription<Tacada>? _tacadaSub;
 
   Timer? _clock;
   StreamSubscription<SessionEvent>? _subscription;
@@ -33,7 +41,8 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
   bool _stopping = false;
   double _lastSpeed = 0;
 
-  int get _shotCount => _events.where((e) => e.eventType == 'shot' || e.eventType == 'ace').length;
+  static const _shotTypes = {'shot', 'ace', 'forehand', 'backhand'};
+  int get _shotCount => _events.where((e) => _shotTypes.contains(e.eventType)).length;
   int get _aceCount => _events.where((e) => e.eventType == 'ace').length;
   double? get _avgSpeed {
     final speeds = _events.map((e) => e.ballSpeedKmh).whereType<double>().toList();
@@ -52,6 +61,13 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
     super.initState();
     _startClock();
     _subscription = _racket.events.listen(_onEvent);
+    if (widget.useRealRacket) {
+      // Tambem guarda a tacada completa (todos os campos do contrato) para
+      // enviar ao backend em lote, mesmo que a internet da quadra falhe.
+      _tacadaSub = BleRacketService.instance.tacadas.listen(
+        (t) => TacadaSyncService.instance.enqueue(t, sessionId: widget.session.id),
+      );
+    }
     _racket.start();
   }
 
@@ -97,6 +113,7 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
     _clock?.cancel();
     _racket.stop();
     await _flushEvents();
+    TacadaSyncService.instance.flush();
 
     try {
       final updated = await _sessionService.update(
@@ -156,6 +173,7 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
   void dispose() {
     _clock?.cancel();
     _subscription?.cancel();
+    _tacadaSub?.cancel();
     _racket.dispose();
     super.dispose();
   }
@@ -178,6 +196,10 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
                       onPressed: _confirmSafeStop,
                     ),
                     const Spacer(),
+                    if (widget.useRealRacket) ...[
+                      const _RacketLinkChip(),
+                      const SizedBox(width: 8),
+                    ],
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
@@ -247,6 +269,36 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Estado da conexao com a raquete real durante a sessao.
+class _RacketLinkChip extends StatelessWidget {
+  const _RacketLinkChip();
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<RacketLinkState>(
+      valueListenable: BleRacketService.instance.state,
+      builder: (context, state, _) {
+        final ok = state == RacketLinkState.connected;
+        final reconnecting = state == RacketLinkState.reconnecting;
+        final color = ok ? AppColors.green : (reconnecting ? AppColors.warning : AppColors.error);
+        final label = ok ? 'RAQUETE' : (reconnecting ? 'RECONECTANDO' : 'SEM RAQUETE');
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(ok ? Icons.bluetooth_connected : Icons.bluetooth_disabled, size: 12, color: color),
+              const SizedBox(width: 4),
+              Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 11, letterSpacing: 0.5)),
+            ],
+          ),
+        );
+      },
     );
   }
 }

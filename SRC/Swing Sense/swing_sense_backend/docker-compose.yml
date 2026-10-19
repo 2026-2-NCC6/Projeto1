@@ -7,5 +7,15 @@ services:
       - .env
     environment:
       PORT: 8080
+      APP_ENV: ${APP_ENV:-development}
     ports:
+      # Para expor somente na maquina local, use "127.0.0.1:8080:8080".
       - "8080:8080"
+    # Hardening do container (R-10)
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    pids_limit: 256

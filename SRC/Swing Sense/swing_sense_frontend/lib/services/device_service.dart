@@ -18,4 +18,20 @@ class DeviceService {
     });
     return SmartDevice.fromJson(data as Map<String, dynamic>);
   }
+
+  /// Registra (uma unica vez) a raquete BLE real do usuario. Se ja existir um
+  /// dispositivo com o mesmo identificador, reaproveita.
+  Future<SmartDevice> ensureReal({required String identifier, String firmwareVersion = 'proto-1'}) async {
+    final existing = await myDevices();
+    for (final d in existing) {
+      if (!d.isSimulated && d.deviceIdentifier == identifier) return d;
+    }
+    final data = await _client.post('/devices/pair', body: {
+      'deviceName': identifier,
+      'deviceIdentifier': identifier,
+      'isSimulated': false,
+      'firmwareVersion': firmwareVersion,
+    });
+    return SmartDevice.fromJson(data as Map<String, dynamic>);
+  }
 }

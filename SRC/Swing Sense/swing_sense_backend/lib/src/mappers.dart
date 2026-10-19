@@ -46,6 +46,19 @@ Map<String, dynamic> userToJson(Map<String, dynamic> row) {
   };
 }
 
+/// Perfil publico de terceiros: sem email, data de nascimento nem role.
+Map<String, dynamic> userPublicToJson(Map<String, dynamic> row) {
+  return {
+    'id': row['id'],
+    'name': row['name'],
+    'avatarUrl': row['avatar_url'],
+    'bio': row['bio'],
+    'level': row['level'],
+    'city': row['city'],
+    'createdAt': toIsoOrNull(row['created_at']),
+  };
+}
+
 Map<String, dynamic> trainingToJson(Map<String, dynamic> row) {
   return {
     'id': row['id'],

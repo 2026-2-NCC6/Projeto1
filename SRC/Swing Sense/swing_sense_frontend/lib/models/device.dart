@@ -6,6 +6,7 @@ class SmartDevice {
     required this.id,
     required this.deviceName,
     required this.isSimulated,
+    this.deviceIdentifier,
     this.firmwareVersion,
     this.lastSyncAt,
   });
@@ -13,6 +14,9 @@ class SmartDevice {
   final String id;
   final String deviceName;
   final bool isSimulated;
+
+  /// Identificador do hardware (ex.: `SwingSense-A1B2` para o prototipo BLE).
+  final String? deviceIdentifier;
   final String? firmwareVersion;
   final DateTime? lastSyncAt;
 
@@ -21,6 +25,7 @@ class SmartDevice {
       id: json['id'] as String,
       deviceName: json['deviceName'] as String? ?? 'Smart Racket',
       isSimulated: json['isSimulated'] as bool? ?? true,
+      deviceIdentifier: json['deviceIdentifier'] as String?,
       firmwareVersion: json['firmwareVersion'] as String?,
       lastSyncAt: json['lastSyncAt'] != null ? DateTime.tryParse(json['lastSyncAt'] as String) : null,
     );

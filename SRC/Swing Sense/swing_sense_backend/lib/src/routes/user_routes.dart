@@ -5,6 +5,7 @@ import '../db/postgres_store.dart';
 import '../mappers.dart';
 import '../middleware/auth_middleware.dart';
 import '../utils/response.dart';
+import '../utils/validators.dart';
 
 Router userRoutes(PgStore db) {
   final router = Router();
@@ -12,8 +13,11 @@ Router userRoutes(PgStore db) {
   Future<Map<String, dynamic>?> fetchUserWithStats(String userId, String viewerId) async {
     final row = await db.getUserWithStats(userId, viewerId);
     if (row == null) return null;
+    // Privacidade: email, data de nascimento e role so voltam para o proprio
+    // usuario; perfis de terceiros expoem apenas dados publicos.
+    final base = userId == viewerId ? userToJson(row) : userPublicToJson(row);
     return {
-      ...userToJson(row),
+      ...base,
       'followersCount': toIntOr(row['followers_count']),
       'followingCount': toIntOr(row['following_count']),
       'sessionsCount': toIntOr(row['sessions_count']),
@@ -31,8 +35,17 @@ Router userRoutes(PgStore db) {
   // PUT /users/me
   router.put('/me', (Request request) async {
     final body = await readJsonBody(request);
+    final validationError = [
+      if (body['name'] != null) validateText(body['name'], 'Nome', min: 2, max: 80),
+      validateText(body['bio'], 'Bio', max: 300),
+      validateText(body['city'], 'Cidade', max: 80),
+      validateHttpUrl(body['avatarUrl'], 'avatarUrl'),
+      if (body['level'] != null && !validLevels.contains(body['level'])) 'Nivel invalido',
+    ].firstWhere((e) => e != null, orElse: () => null);
+    if (validationError != null) return ApiResponse.error(validationError);
+
     final fields = <String, Object?>{};
-    if (body['name'] != null) fields['name'] = body['name'];
+    if (body['name'] != null) fields['name'] = (body['name'] as String).trim();
     if (body['bio'] != null) fields['bio'] = body['bio'];
     if (body['avatarUrl'] != null) fields['avatar_url'] = body['avatarUrl'];
     if (body['level'] != null) fields['level'] = body['level'];
@@ -45,14 +58,16 @@ Router userRoutes(PgStore db) {
 
   // GET /users/search?q=
   router.get('/search', (Request request) async {
-    final query = request.url.queryParameters['q']?.trim().toLowerCase() ?? '';
+    var query = request.url.queryParameters['q']?.trim().toLowerCase() ?? '';
     if (query.isEmpty) return ApiResponse.ok([]);
+    if (query.length > 50) query = query.substring(0, 50);
     final results = await db.searchUsers(query, request.userId, limit: 20);
     return ApiResponse.ok(results.map((u) => userSummaryToJson(u)).toList());
   });
 
   // GET /users/:id
   router.get('/<id>', (Request request, String id) async {
+    if (!isUuid(id)) return ApiResponse.notFound('Usuario nao encontrado');
     final user = await fetchUserWithStats(id, request.userId);
     if (user == null) return ApiResponse.notFound('Usuario nao encontrado');
     return ApiResponse.ok(user);
@@ -63,18 +78,23 @@ Router userRoutes(PgStore db) {
     if (id == request.userId) {
       return ApiResponse.error('Voce nao pode seguir a si mesmo');
     }
+    if (!isUuid(id) || await db.getUserById(id) == null) {
+      return ApiResponse.notFound('Usuario nao encontrado');
+    }
     await db.follow(request.userId, id);
     return ApiResponse.ok({'following': true});
   });
 
   // DELETE /users/:id/follow
   router.delete('/<id>/follow', (Request request, String id) async {
+    if (!isUuid(id)) return ApiResponse.notFound('Usuario nao encontrado');
     await db.unfollow(request.userId, id);
     return ApiResponse.ok({'following': false});
   });
 
   // GET /users/:id/sessions
   router.get('/<id>/sessions', (Request request, String id) async {
+    if (!isUuid(id)) return ApiResponse.notFound('Usuario nao encontrado');
     final sessions = await db.getUserSessions(id, request.userId);
     return ApiResponse.ok(sessions.map((s) => sessionToJson(s)).toList());
   });

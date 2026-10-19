@@ -43,6 +43,10 @@ class SessionEvent {
     switch (eventType) {
       case 'shot':
         return 'Tacada';
+      case 'forehand':
+        return 'Forehand';
+      case 'backhand':
+        return 'Backhand';
       case 'ace':
         return 'Ace';
       case 'fault':

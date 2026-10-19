@@ -5,6 +5,7 @@ import '../db/postgres_store.dart';
 import '../mappers.dart';
 import '../middleware/auth_middleware.dart';
 import '../utils/response.dart';
+import '../utils/validators.dart';
 
 /// Pareamento da raquete inteligente. Enquanto o ESP32 nao existe fisicamente,
 /// o app cria um device com is_simulated = true e usa o MockRacketService
@@ -22,7 +23,15 @@ Router deviceRoutes(PgStore db) {
   // POST /devices/pair
   router.post('/pair', (Request request) async {
     final body = await readJsonBody(request);
-    final deviceName = (body['deviceName'] as String?)?.trim() ?? 'Smart Racket';
+    final error = [
+      validateText(body['deviceName'], 'deviceName', max: 60),
+      validateText(body['deviceIdentifier'], 'deviceIdentifier', max: 64),
+      validateText(body['firmwareVersion'], 'firmwareVersion', max: 32),
+      (body['isSimulated'] == null || body['isSimulated'] is bool) ? null : 'isSimulated deve ser booleano',
+    ].firstWhere((e) => e != null, orElse: () => null);
+    if (error != null) return ApiResponse.error(error);
+    final rawName = (body['deviceName'] as String?)?.trim();
+    final deviceName = (rawName == null || rawName.isEmpty) ? 'Smart Racket' : rawName;
     final row = await db.pairDevice(
       id: PgStore.newId(),
       userId: request.userId,
@@ -36,6 +45,7 @@ Router deviceRoutes(PgStore db) {
 
   // PATCH /devices/:id/sync
   router.patch('/<id>/sync', (Request request, String id) async {
+    if (!isUuid(id)) return ApiResponse.notFound('Dispositivo nao encontrado');
     final device = await db.syncDevice(id, request.userId);
     if (device == null) return ApiResponse.notFound('Dispositivo nao encontrado');
     return ApiResponse.ok(deviceToJson(device));

@@ -42,6 +42,8 @@ dependencies:
   intl: ^0.19.0
   fl_chart: ^0.69.0
   google_fonts: ^6.3.3
+  # Bluetooth Low Energy (raquete real). Serie 1.x: a API muda na 2.x.
+  flutter_blue_plus: ^1.32.0
 
 dev_dependencies:
   flutter_test:

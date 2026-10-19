@@ -5,6 +5,7 @@ import '../db/postgres_store.dart';
 import '../mappers.dart';
 import '../middleware/auth_middleware.dart';
 import '../utils/response.dart';
+import '../utils/validators.dart';
 
 Router trainingRoutes(PgStore db) {
   final router = Router();
@@ -22,6 +23,7 @@ Router trainingRoutes(PgStore db) {
 
   // GET /trainings/:id
   router.get('/<id>', (Request request, String id) async {
+    if (!isUuid(id)) return ApiResponse.notFound('Treino nao encontrado');
     final training = await db.getTrainingById(id);
     if (training == null) return ApiResponse.notFound('Treino nao encontrado');
     return ApiResponse.ok(trainingToJson(training));
@@ -30,8 +32,19 @@ Router trainingRoutes(PgStore db) {
   // POST /trainings - qualquer usuario autenticado pode publicar (autor/treinador).
   router.post('/', (Request request) async {
     final body = await readJsonBody(request);
-    final title = (body['title'] as String?)?.trim();
+    final title = body['title'] is String ? (body['title'] as String).trim() : null;
     if (title == null || title.isEmpty) return ApiResponse.error('Titulo e obrigatorio');
+    final coverColor = body['coverColor'];
+    final error = [
+      validateText(title, 'Titulo', max: 120),
+      validateText(body['description'], 'Descricao', max: 2000),
+      validateText(body['targetAudience'], 'targetAudience', max: 40),
+      validateText(body['focus'], 'focus', max: 40),
+      (body['difficulty'] == null || validLevels.contains(body['difficulty'])) ? null : 'Dificuldade invalida',
+      validateNumber(body['durationMinutes'], 'durationMinutes', min: 1, max: 600, integer: true),
+      (coverColor == null || (coverColor is String && isHexColor(coverColor))) ? null : 'coverColor deve ser hexadecimal (RRGGBB)',
+    ].firstWhere((e) => e != null, orElse: () => null);
+    if (error != null) return ApiResponse.error(error);
 
     final row = await db.createTraining(
       id: PgStore.newId(),

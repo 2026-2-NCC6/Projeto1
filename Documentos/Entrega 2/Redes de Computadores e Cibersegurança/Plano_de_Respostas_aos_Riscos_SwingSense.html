@@ -1,0 +1,438 @@
+<!DOCTYPE html><html lang=pt-BR><head><meta charset=utf-8><title>Plano de Respostas aos Riscos — Swing Sense</title><style>
+
+@page { size: A4; margin: 20mm 18mm 18mm 18mm;
+  @bottom-center { content: "Plano de Respostas aos Riscos — Swing Sense (Entrega 2)"; }
+}
+* { box-sizing: border-box; }
+body { font-family: 'Helvetica Neue', Arial, sans-serif; color:#1a1a1a; font-size:10.5pt; line-height:1.5; margin:0; }
+h1,h2,h3 { color:#0b3d2e; line-height:1.25; }
+h1 { font-size:20pt; margin:0 0 4px; }
+h2 { font-size:14pt; margin:22px 0 8px; border-bottom:2px solid #1DB954; padding-bottom:4px; }
+h3 { font-size:11.5pt; margin:16px 0 4px; color:#155e40; }
+p { margin:6px 0; text-align:justify; }
+ul,ol { margin:6px 0 6px 18px; padding:0; }
+li { margin:3px 0; }
+code, .mono { font-family:'SF Mono','Consolas',monospace; font-size:9pt; background:#f2f4f3; padding:1px 4px; border-radius:3px; }
+table { width:100%; border-collapse:collapse; margin:10px 0; font-size:9.3pt; }
+th,td { border:1px solid #c8d3cd; padding:5px 7px; vertical-align:top; text-align:left; }
+th { background:#0b3d2e; color:#fff; font-weight:600; }
+tr:nth-child(even) td { background:#f6f9f7; }
+.small { font-size:8.8pt; color:#555; }
+.tag { display:inline-block; padding:1px 7px; border-radius:10px; color:#fff; font-size:8.3pt; font-weight:700; }
+.ex { background:#7d0a0a; }      /* Extremo */
+.al { background:#c0392b; }      /* Alto */
+.me { background:#e08e0b; }      /* Medio */
+.ba { background:#3a8a3a; }      /* Baixo */
+.mb { background:#2e7d32; }      /* Muito baixo */
+.pos { background:#1DB954; }
+.card { border:1px solid #cfe0d7; border-left:5px solid #0b3d2e; border-radius:6px; padding:8px 12px; margin:12px 0; page-break-inside:avoid; }
+.card h3 { margin-top:0; }
+.evid { background:#0f1512; color:#d6f5e2; font-family:'SF Mono','Consolas',monospace; font-size:8.2pt; white-space:pre-wrap; padding:8px 10px; border-radius:5px; margin:6px 0; overflow-wrap:anywhere; }
+.kv { font-size:9.2pt; }
+.kv b { color:#0b3d2e; }
+.matrix td { text-align:center; font-weight:600; }
+.matrix th { text-align:center; }
+.cover { text-align:center; padding-top:60px; page-break-after:always; }
+.cover .logo { font-size:30pt; font-weight:800; color:#1DB954; letter-spacing:1px; }
+.cover .sub { color:#0b3d2e; font-size:15pt; margin-top:4px; }
+.cover .meta { margin-top:40px; font-size:11pt; }
+.cover .box { display:inline-block; text-align:left; border:1px solid #c8d3cd; border-radius:8px; padding:16px 26px; margin-top:24px; }
+.note { background:#eef7f1; border:1px solid #bfe3cd; border-radius:6px; padding:8px 12px; margin:10px 0; font-size:9.5pt; }
+.center { text-align:center; }
+.section-break { page-break-before: always; }
+.sig { font-family:'Snell Roundhand','Brush Script MT','Segoe Script',cursive; font-size:15pt; color:#12305a; line-height:1; }
+
+ol.tight { margin:0 0 0 16px; padding:0; } ol.tight li { margin:2px 0; }
+.diff { color:#e6e6e6; }
+table.resp { font-size:7.6pt; } table.resp code { font-size:6.8pt; padding:0 2px; } table.resp td, table.resp th { padding:3px 4px; }
+.landscape { page: land; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+</style></head><body>
+
+<div class=cover>
+  <div class=logo>SWING SENSE</div>
+  <div class=sub>Plano de Respostas aos Riscos de Segurança da Informação</div>
+  <div class="small" style="margin-top:6px">Entrega 2 — Relatório de Mitigações Implementadas no Código — Redes de Computadores e Cibersegurança</div>
+  <div class=box>
+    <div class="meta" style="margin:0;font-size:10.5pt;line-height:1.7">
+      <b>Projeto:</b> Swing Sense — rede social de treinos de tênis com raquete inteligente (ESP32)<br>
+      <b>Data de criação/atualização:</b> 18/10/2026<br>
+      <b>Versão:</b> 2.0 (evolução do Plano de Gerenciamento de Riscos v1.0 — Entrega 1)<br>
+      <b>Componentes tratados:</b> Backend (Dart/shelf), App (Flutter), Banco (PostgreSQL/Supabase), Container (Docker)<br>
+      <b>Integrantes do grupo:</b><br>
+      Antônio Petri &nbsp;•&nbsp; Gabriel Higobassi Paschoal<br>
+      Lucas Silva Maciel &nbsp;•&nbsp; Thiago Akira Higa Mitami
+    </div>
+  </div>
+  <p class="small" style="margin-top:40px">Entregáveis: este relatório (HTML/PDF) e o código-fonte em <code>SRC/Swing Sense/</code> com as correções e a suíte de testes <code>swing_sense_backend/test/security_test.dart</code>.</p>
+</div>
+
+<h1>Plano de Respostas aos Riscos</h1>
+<p class=small>Projeto: Swing Sense &nbsp;|&nbsp; Data: 18/10/2026 &nbsp;|&nbsp; Versão: 2.0</p>
+
+<h2>1. Introdução</h2>
+<p>Este documento detalha as estratégias e ações específicas aplicadas para lidar com os riscos (vulnerabilidades) identificados no projeto Swing Sense. Ele dá continuidade ao <i>Plano de Gerenciamento de Riscos</i> da Entrega 1, que encontrou e provou 12 vulnerabilidades (R-01 a R-12), e passa da <b>identificação</b> para a <b>resposta</b>: cada risco recebeu uma estratégia (prevenir, transferir, mitigar ou aceitar), ações técnicas concretas <b>já implementadas no código</b> e uma verificação.</p>
+<p>Nesta entrega também foi feita uma nova rodada de revisão de código (SAST) em todo o backend e no app, que encontrou <b>6 riscos adicionais (R-13 a R-18)</b>. O objetivo acadêmico é demonstrar o ciclo completo: <i>encontrar → documentar → corrigir → comprovar</i>, sem alterar o contrato da API nem a usabilidade do app.</p>
+
+<div class="note"><b>Resumo executivo.</b> Dos 18 riscos, <b>14</b> estão <b>Concluídos</b> (correção no código + teste automatizado), <b>3</b> estão <b>Em Andamento</b> (código pronto, dependem de implantação/processo: R-04, R-09, R-12) e <b>1</b> está <b>Não Iniciado</b> (R-18, com justificativa). Os dois riscos <b>Extremos</b> (R-01, R-02) foram eliminados. Nível antes → depois: Extremo 2→0; Alto 4→0; Médio 8→5; Baixo 4→11; Muito Baixo 0→2.</div>
+
+<h2>2. Tabela de Respostas aos Riscos</h2>
+<p>Núcleo do plano: a resposta para cada risco priorizado. "Nível" é o nível inicial (matriz da Entrega 1); o nível residual após as ações está na Seção 5. Responsáveis são papéis definidos na Entrega 1 (Coordenação de Segurança: Lucas Silva Maciel; Equipe de Desenvolvimento: demais integrantes). Prazos marcados como <i>proposto</i> ainda não ocorreram.</p>
+<table class="resp">
+<tr><th style="width:5%">ID do Risco</th><th style="width:13%">Descrição do Risco</th><th style="width:7%">Nível (Prioridade)</th><th style="width:8%">Estratégia de Resposta</th><th style="width:42%">Ações Específicas Planejadas / Aplicadas</th><th style="width:8%">Responsável pela Ação</th><th style="width:8%">Prazo</th><th style="width:7%">Status</th></tr>
+<tr><td><b>R-01</b></td><td>Segredo JWT padrão/hardcoded no código</td><td><span class="tag ex">Extremo</span></td><td>Prevenir (Evitar)</td><td><ol class='tight'><li>Removido o valor padrão: <code>SecurityConfig.fromEnv()</code> (<code>utils/security_config.dart</code>) exige segredo ≥ 32 caracteres e que não seja nenhum dos exemplos públicos.</li><li>Com <code>APP_ENV=production</code> a API <b>recusa subir</b> com segredo ausente/fraco (falha antes de abrir o banco).</li><li>Em desenvolvimento, segredo vazio/fraco gera um segredo <b>aleatório temporário</b> (48 bytes, <code>Random.secure</code>) com aviso — o "plug and play" local continua e nenhuma chave conhecida é aceita.</li><li><code>.env.example</code> sem segredo reutilizável, com instrução <code>openssl rand -base64 48</code>. Tokens agora levam <code>iss</code> e <code>jti</code> e a verificação exige o emissor.</li></ol></td><td>Coordenação de Segurança</td><td>18/10/2026</td><td>Concluído</td></tr>
+<tr><td><b>R-02</b></td><td>IDOR na ingestão de telemetria (POST /sessions/:id/events)</td><td><span class="tag ex">Extremo</span></td><td>Prevenir (Evitar)</td><td><ol class='tight'><li><code>session_routes.dart</code>: a rota carrega a sessão e exige <code>session.user_id == request.userId</code> (mesmo padrão do <code>GET /:id/events</code>); caso contrário <b>404</b> (não revela a existência do ID).</li><li>IDs que não são UUID retornam 404 antes de chegar ao banco.</li></ol></td><td>Equipe de Desenvolvimento</td><td>18/10/2026</td><td>Concluído</td></tr>
+<tr><td><b>R-03</b></td><td>IDOR em curtidas e comentários (/feed/:id/like, /comments)</td><td><span class="tag me">Médio</span></td><td>Mitigar</td><td><ol class='tight'><li><code>feed_routes.dart</code>: função <code>canInteract</code> — a sessão precisa ser do próprio usuário, ou <b>concluída e de alguém que ele segue</b> (a mesma regra do feed, então a experiência do app não muda).</li><li>Aplicada em curtir, listar e criar comentários; comentário limitado a 500 caracteres.</li></ol></td><td>Equipe de Desenvolvimento</td><td>18/10/2026</td><td>Concluído</td></tr>
+<tr><td><b>R-04</b></td><td>Enumeração de usuários no cadastro</td><td><span class="tag me">Médio</span></td><td>Mitigar + Aceitar (Ativo)</td><td><ol class='tight'><li>Limite de <b>10 cadastros/hora por IP</b> (<code>AuthLimiters.registerPerIp</code>) → HTTP 429 com <code>Retry-After</code>: impede varrer listas de e-mails em escala.</li><li>Login: bcrypt "descartável" quando o e-mail não existe, igualando o tempo de resposta (ver R-15).</li><li><b>Decisão consciente:</b> o 409 foi mantido porque o app o usa para orientar o usuário; trocá-lo exige fluxo de confirmação por e-mail (não existe ainda). Risco residual aceito de forma ativa (rate limit + monitoramento) até a implantação do e-mail de confirmação.</li></ol></td><td>Equipe de Desenvolvimento</td><td>15/11/2026 (proposto)</td><td>Em Andamento</td></tr>
+<tr><td><b>R-05</b></td><td>Ausência de proteção contra força bruta (login)</td><td><span class="tag al">Alto</span></td><td>Mitigar</td><td><ol class='tight'><li><code>utils/rate_limiter.dart</code>: limitador de janela deslizante (15 min) em três camadas — 30 tentativas/IP, <b>5 falhas por IP+e-mail</b>, 20 falhas por e-mail (qualquer IP).</li><li>Bloqueio responde <b>429 + Retry-After</b>; login correto zera o contador do par. O par IP+e-mail evita que um atacante tranque a conta da vítima a partir de outro IP.</li><li>IP real só é lido de <code>X-Forwarded-For</code> quando <code>TRUST_PROXY=true</code> (senão o atacante forjaria o header).</li></ol></td><td>Equipe de Desenvolvimento</td><td>18/10/2026</td><td>Concluído</td></tr>
+<tr><td><b>R-06</b></td><td>Política de senha fraca</td><td><span class="tag me">Médio</span></td><td>Mitigar</td><td><ol class='tight'><li><code>utils/validators.dart › validatePassword</code>: 8–128 caracteres, ao menos uma letra e um número, fora de lista de senhas comuns, sem conter o e-mail/ser igual ao nome. O teto de 128 evita DoS no bcrypt.</li><li>App: validador da tela de cadastro alinhado (<code>signup_screen.dart</code>).</li><li><b>Compatibilidade:</b> a política vale só no <i>cadastro</i>; o login continua aceitando senhas antigas de 6+ caracteres, então nenhuma conta existente é bloqueada.</li></ol></td><td>Equipe de Desenvolvimento</td><td>18/10/2026</td><td>Concluído</td></tr>
+<tr><td><b>R-07</b></td><td>CORS permissivo (Access-Control-Allow-Origin: *)</td><td><span class="tag ba">Baixo</span></td><td>Mitigar</td><td><ol class='tight'><li><code>middleware/security_middleware.dart › corsAllowlist</code>: allowlist por <code>CORS_ALLOWED_ORIGINS</code>; origem permitida é refletida com <code>Vary: Origin</code>; preflight de origem não permitida → 403.</li><li>Apps nativos (Android/iOS) não enviam <code>Origin</code> e não são afetados. Fora de produção <code>localhost</code> segue liberado (<code>flutter run -d chrome</code> continua funcionando).</li></ol></td><td>Equipe de Desenvolvimento</td><td>18/10/2026</td><td>Concluído</td></tr>
+<tr><td><b>R-08</b></td><td>Tokens JWT de longa duração sem revogação</td><td><span class="tag me">Médio</span></td><td>Mitigar</td><td><ol class='tight'><li>Validade padrão <b>24 h</b>, teto de 72 h (<code>JWT_EXPIRES_IN_HOURS</code> acima disso é reduzido com aviso).</li><li>Cada token ganha um <code>jti</code>; novo <code>POST /auth/logout</code> o inclui numa lista de revogação em memória (limpa após o <code>exp</code>). O app chama o logout em modo "melhor esforço" (offline não impede sair).</li><li>Tokens emitidos antes desta versão (sem <code>jti</code>) deixam de valer: o app trata o 401 no <code>bootstrap()</code> e leva o usuário ao login — <b>um novo login único</b> após a atualização.</li></ol></td><td>Equipe de Desenvolvimento</td><td>18/10/2026</td><td>Concluído</td></tr>
+<tr><td><b>R-09</b></td><td>Transporte sem TLS (HTTP em texto claro)</td><td><span class="tag al">Alto</span></td><td>Mitigar (+ Transferir TLS ao proxy/provedor)</td><td><ol class='tight'><li><b>API:</b> TLS nativo opcional (<code>TLS_CERT_PATH</code>/<code>TLS_KEY_PATH</code>) ou atrás de proxy com <code>TRUST_PROXY=true</code>; <b>HSTS</b> em produção/HTTPS; aviso na subida se produção rodar em HTTP puro; demais cabeçalhos (<code>nosniff</code>, <code>X-Frame-Options</code>, <code>CSP</code>, <code>Cache-Control: no-store</code>, <code>Referrer-Policy</code>).</li><li><b>Android:</b> <code>usesCleartextTraffic="false"</code> no manifesto principal (release); debug/profile mantêm HTTP para a API local — o desenvolvimento não muda.</li><li><b>App:</b> em build de <i>release</i>, <code>ApiClient</code> bloqueia URL <code>http://</code> que não seja localhost/emulador; basta compilar com <code>--dart-define=API_BASE_URL=https://…</code>.</li><li><b>Pendente (implantação):</b> publicar a API com certificado válido (proxy/plataforma de nuvem). O código está pronto; o certificado depende do ambiente de hospedagem.</li></ol></td><td>Coordenação de Segurança</td><td>15/11/2026 (proposto)</td><td>Em Andamento</td></tr>
+<tr><td><b>R-10</b></td><td>Container executando como root em modo de desenvolvimento</td><td><span class="tag ba">Baixo</span></td><td>Mitigar</td><td><ol class='tight'><li><code>Dockerfile</code> multi-estágio: <code>dart compile exe</code> (AOT) e imagem final <code>FROM scratch</code> (sem shell/gerenciador de pacotes), <code>USER 10001</code>, <code>HEALTHCHECK</code> pelo próprio binário (<code>--healthcheck</code>).</li><li><code>docker-compose.yml</code>: <code>read_only</code>, <code>cap_drop: ALL</code>, <code>no-new-privileges</code>, limites de memória e processos.</li></ol></td><td>Equipe de Desenvolvimento</td><td>18/10/2026</td><td>Concluído</td></tr>
+<tr><td><b>R-11</b></td><td>Falta de validação/limite de payload (abuso de armazenamento/DoS)</td><td><span class="tag ba">Baixo</span></td><td>Mitigar</td><td><ol class='tight'><li><code>bodyLimit</code>: corpo máximo de 256 KiB (<code>MAX_BODY_BYTES</code>), checado por <code>Content-Length</code> e em streaming (cobre <i>chunked</i>) → 413.</li><li>Máx. 500 eventos por requisição (o app envia lotes pequenos a cada 6 s); <code>eventType</code> restrito a <code>[a-z][a-z0-9_]{0,39}</code> (aceita <code>shot/ace/fault</code> e os tipos futuros do ESP32); faixas: velocidade 0–400 km/h, rotação 0–10000 rpm, ângulo ±360°.</li><li>Limites de texto: comentário 500, notas 2000, bio 300, título 120 etc.; números das sessões/metas com faixa (evita <i>overflow</i> de <code>NUMERIC(5,1)</code> → 500).</li></ol></td><td>Equipe de Desenvolvimento</td><td>18/10/2026</td><td>Concluído</td></tr>
+<tr><td><b>R-12</b></td><td>Exposição de credenciais do banco (Supabase) por vazamento de segredo</td><td><span class="tag al">Alto</span></td><td>Transferir + Mitigar</td><td><ol class='tight'><li><code>.dockerignore</code> exclui <code>.env*</code> da imagem (o <code>.env</code> chega só como variável de ambiente via compose).</li><li>Workflow <code>.github/workflows/security.yml</code>: <b>gitleaks</b> em cada push/PR + <code>dart analyze</code> e <code>dart test</code>.</li><li>Auditoria do histórico git: nenhum <code>.env</code> real ou senha foi versionado (só os placeholders do <code>.env.example</code>).</li><li><b>Transferir:</b> usar Supabase Vault / GitHub Actions Secrets para produção. <b>Pendente:</b> rotação periódica e papel de banco com menor privilégio.</li></ol></td><td>Coordenação de Segurança</td><td>15/11/2026 (proposto)</td><td>Em Andamento</td></tr>
+<tr><td><b>R-13</b><br><span class=small>(novo)</span></td><td>Exposição de dados pessoais no perfil público (GET /users/:id)</td><td><span class="tag al">Alto</span></td><td>Prevenir (Evitar)</td><td><ol class='tight'><li>Novo mapper <code>userPublicToJson</code> (<code>mappers.dart</code>): nome, avatar, bio, nível, cidade e data de cadastro. E-mail/nascimento/role só voltam em <code>/users/me</code> e <code>PUT /users/me</code>.</li></ol></td><td>Equipe de Desenvolvimento</td><td>18/10/2026</td><td>Concluído</td></tr>
+<tr><td><b>R-14</b><br><span class=small>(novo)</span></td><td>Sem tratamento global de erros (HTTP 500 / vazamento) e IDs sem validação</td><td><span class="tag me">Médio</span></td><td>Mitigar</td><td><ol class='tight'><li><code>errorHandler</code>: JSON inválido/tipos errados → 400; erros de dado do Postgres (22P02, 22003, 22001, 23503…) → 400 "Dados invalidos"; qualquer outro → 500 genérico "Erro interno" (detalhes só no log do servidor).</li><li>IDs de rota validados com <code>isUuid</code> antes de consultar o banco (404 para formato inválido). Resposta de erro nunca inclui stack trace/SQL.</li></ol></td><td>Equipe de Desenvolvimento</td><td>18/10/2026</td><td>Concluído</td></tr>
+<tr><td><b>R-15</b><br><span class=small>(novo)</span></td><td>Diferença de tempo no login revela se o e-mail existe (timing)</td><td><span class="tag me">Médio</span></td><td>Mitigar</td><td><ol class='tight'><li>Um hash bcrypt descartável é verificado também quando o usuário não existe, equalizando o custo.</li></ol></td><td>Equipe de Desenvolvimento</td><td>18/10/2026</td><td>Concluído</td></tr>
+<tr><td><b>R-16</b><br><span class=small>(novo)</span></td><td>Validação insuficiente de entrada e integridade dos dados</td><td><span class="tag me">Médio</span></td><td>Mitigar</td><td><ol class='tight'><li>Validadores centrais (<code>utils/validators.dart</code>): <code>validateText/Number/HttpUrl/Date</code>, allowlists de <code>level</code> e <code>status</code> da meta, cor hexadecimal, <code>isSlug</code> para tipos.</li><li><code>POST /sessions</code>: <code>trainingId</code> deve existir e <code>deviceId</code> deve pertencer ao usuário autenticado. <code>POST /users/:id/follow</code> valida existência do alvo.</li><li><b>Compatibilidade:</b> os valores que o app envia hoje (<code>iniciante…profissional</code>, <code>active/completed</code>, tipos de meta e eventos <code>shot/ace/fault</code>) foram conferidos no código do app e continuam aceitos.</li></ol></td><td>Equipe de Desenvolvimento</td><td>18/10/2026</td><td>Concluído</td></tr>
+<tr><td><b>R-17</b><br><span class=small>(novo)</span></td><td>Curingas de ILIKE sem escape na busca de usuários</td><td><span class="tag ba">Baixo</span></td><td>Prevenir (Evitar)</td><td><ol class='tight'><li><code>escapeLike</code> escapa <code>% _ \</code> e a consulta usa <code>ILIKE … ESCAPE '\'</code>; consulta limitada a 50 caracteres (e 20 resultados, já existente).</li></ol></td><td>Equipe de Desenvolvimento</td><td>18/10/2026</td><td>Concluído</td></tr>
+<tr><td><b>R-18</b><br><span class=small>(novo)</span></td><td>Token JWT guardado sem criptografia no dispositivo (SharedPreferences)</td><td><span class="tag me">Médio</span></td><td>Mitigar (planejado)</td><td><ol class='tight'><li>Recomendado: migrar para <code>flutter_secure_storage</code> (Keystore/Keychain). <b>Não aplicado nesta entrega</b> porque exige nova dependência, ajuste nativo (minSdk 23, Keychain) e testes em dispositivo que não foi possível executar aqui; trocar às cegas arriscaria quebrar o login do app.</li><li>Mitigação parcial já ativa: validade de 24 h e revogação no logout (R-08).</li></ol></td><td>Equipe de Desenvolvimento</td><td>29/11/2026 (proposto)</td><td>Não Iniciado</td></tr>
+</table>
+
+<h2 class="section-break">3. Detalhamento das Estratégias de Resposta</h2>
+<h3>3.1. Estratégias para Ameaças (Riscos Negativos) e como foram usadas</h3>
+<ul>
+<li><b>Prevenir (Evitar):</b> mudar o projeto para eliminar a ameaça. <i>Aplicado em:</i> R-01 (o segredo padrão deixou de existir), R-02 (a rota passou a exigir posse), R-13 (e-mail/nascimento de terceiros nem saem do servidor) e R-17 (curingas escapados).</li>
+<li><b>Transferir:</b> repassar o impacto/resposta a um terceiro. <i>Aplicado em:</i> R-12 (guarda de segredos em cofre do provedor: Supabase Vault / GitHub Secrets) e parte de R-09 (terminação TLS delegada a proxy/plataforma de nuvem). Não elimina o risco, apenas muda quem o gerencia.</li>
+<li><b>Mitigar:</b> reduzir probabilidade e/ou impacto a um nível aceitável. <i>Aplicado em:</i> R-03, R-05, R-06, R-07, R-08, R-09, R-10, R-11, R-14, R-15, R-16 e R-18 (rate limit, política de senha, allowlist de CORS, tokens curtos com revogação, hardening de container, validação de entrada).</li>
+<li><b>Aceitar:</b> <i>Ativa</i> — R-04: o 409 do cadastro foi mantido por usabilidade e compensado com rate limit por IP e monitoramento; <i>Passiva</i> — risco residual de revogação de token apenas em memória (R-08), de baixa prioridade dada a validade de 24 h.</li>
+</ul>
+<h3>3.2. Estratégias para Oportunidades (Riscos Positivos)</h3>
+<p>Nenhuma oportunidade foi registrada neste ciclo. Como ganho colateral (<b>Explorar</b>), a suíte <code>security_test.dart</code> e o workflow de CI passam a funcionar como rede de proteção contra regressões em todas as próximas entregas, inclusive na integração com o ESP32 real.</p>
+
+<h3>3.3. Princípios seguidos nas correções (para não quebrar o projeto)</h3>
+<table>
+<tr><th>Preocupação</th><th>Como foi tratada</th></tr>
+<tr><td>Contrato da API e rotas</td><td>Nenhuma rota removida ou renomeada; mesmos JSONs. Única rota nova: <code>POST /auth/logout</code>. Perfis de terceiros deixam de trazer campos que o app não usa.</td></tr>
+<tr><td>Contas existentes</td><td>Política de senha vale só no <i>cadastro</i>; login aceita senhas antigas. Tokens antigos expiram (um novo login).</td></tr>
+<tr><td>Desenvolvimento local</td><td>Sem <code>JWT_SECRET</code> em dev a API sobe com segredo temporário; CORS libera <code>localhost</code>; Android debug mantém HTTP; <code>docker-compose</code> usa <code>APP_ENV=development</code> por padrão.</td></tr>
+<tr><td>Comportamento do app</td><td>Valores enviados pelo app (níveis, status, tipos de meta, eventos) foram conferidos no código do app antes de montar as allowlists; mensagens de erro continuam no campo <code>error</code> que o <code>ApiClient</code> exibe.</td></tr>
+<tr><td>Regras de negócio sociais</td><td>A visibilidade para curtir/comentar replica exatamente a regra do feed (próprias + seguidos concluídos).</td></tr>
+</table>
+
+<h2>4. Matrizes de Probabilidade × Impacto</h2>
+<p>Definições de probabilidade e impacto: as mesmas da Seção 6 do Plano v1.0 (escala de Muito Baixa a Muito Alta; impacto medido em confidencialidade, integridade e disponibilidade).</p>
+<h3>4.1. Antes das respostas (inicial)</h3>
+<table class="matrix"><tr><th>Prob. ↓ / Impacto →</th><th>Muito Baixo</th><th>Baixo</th><th>Médio</th><th>Alto</th><th>Muito Alto</th></tr><tr><th>Muito Alta</th><td>Médio<br><span class="small"></span></td><td>Alto<br><span class="small"></span></td><td>Alto<br><span class="small"></span></td><td>Extremo<br><span class="small"></span></td><td>Extremo<br><span class="small"></span></td></tr><tr><th>Alta</th><td>Baixo<br><span class="small"></span></td><td>Médio<br><span class="small">R-04, R-14</span></td><td>Alto<br><span class="small">R-05, R-13</span></td><td>Alto<br><span class="small">R-02</span></td><td>Extremo<br><span class="small">R-01</span></td></tr><tr><th>Média</th><td>Baixo<br><span class="small">R-17</span></td><td>Médio<br><span class="small">R-07, R-11, R-15</span></td><td>Médio<br><span class="small">R-03, R-06, R-08, R-16</span></td><td>Alto<br><span class="small">R-09</span></td><td>Alto<br><span class="small"></span></td></tr><tr><th>Baixa</th><td>Muito Baixo<br><span class="small"></span></td><td>Baixo<br><span class="small"></span></td><td>Baixo<br><span class="small">R-10</span></td><td>Médio<br><span class="small">R-18</span></td><td>Médio<br><span class="small">R-12</span></td></tr><tr><th>Muito Baixa</th><td>Muito Baixo<br><span class="small"></span></td><td>Muito Baixo<br><span class="small"></span></td><td>Baixo<br><span class="small"></span></td><td>Baixo<br><span class="small"></span></td><td>Médio<br><span class="small"></span></td></tr></table>
+<h3>4.2. Depois das respostas (residual)</h3>
+<table class="matrix"><tr><th>Prob. ↓ / Impacto →</th><th>Muito Baixo</th><th>Baixo</th><th>Médio</th><th>Alto</th><th>Muito Alto</th></tr><tr><th>Muito Alta</th><td>Médio<br><span class="small"></span></td><td>Alto<br><span class="small"></span></td><td>Alto<br><span class="small"></span></td><td>Extremo<br><span class="small"></span></td><td>Extremo<br><span class="small"></span></td></tr><tr><th>Alta</th><td>Baixo<br><span class="small"></span></td><td>Médio<br><span class="small"></span></td><td>Alto<br><span class="small"></span></td><td>Alto<br><span class="small"></span></td><td>Extremo<br><span class="small"></span></td></tr><tr><th>Média</th><td>Baixo<br><span class="small"></span></td><td>Médio<br><span class="small">R-04</span></td><td>Médio<br><span class="small"></span></td><td>Alto<br><span class="small"></span></td><td>Alto<br><span class="small"></span></td></tr><tr><th>Baixa</th><td>Muito Baixo<br><span class="small"></span></td><td>Baixo<br><span class="small">R-11, R-14, R-15, R-16</span></td><td>Baixo<br><span class="small">R-05, R-06, R-08</span></td><td>Médio<br><span class="small">R-09, R-18</span></td><td>Médio<br><span class="small">R-12</span></td></tr><tr><th>Muito Baixa</th><td>Muito Baixo<br><span class="small">R-17</span></td><td>Muito Baixo<br><span class="small">R-07</span></td><td>Baixo<br><span class="small">R-03, R-10, R-13</span></td><td>Baixo<br><span class="small">R-02</span></td><td>Médio<br><span class="small">R-01</span></td></tr></table>
+<p class="note"><b>Observação de consistência:</b> no Plano v1.0 quatro riscos foram registrados com nível diferente do que a matriz calcularia: R-02 (Alta × Alto → matriz: Alto; registrado Extremo), R-12 (Baixa × Muito Alto → Médio; registrado Alto) e R-07/R-11 (Média × Baixo → Médio; registrados Baixo). Mantivemos a classificação original do registro para dar continuidade à Entrega 1 (R-02 e R-12 por critério conservador: integridade do feed e exposição de toda a base); por isso, na matriz 4.1 esses IDs aparecem na célula calculada, mas as demais tabelas usam o nível do registro. Os níveis residuais seguem a matriz.</p>
+<p class="small">Extremo/Alto: atenção imediata. Médio: monitorar de perto. Baixo/Muito Baixo: rotina. Os Médios residuais (R-01, R-04, R-09, R-12, R-18) têm impacto potencial alto e dependem de gestão de segredos, implantação com HTTPS e armazenamento seguro no app.</p>
+
+<h2 class="section-break">5. Detalhamento, Evidências e Verificação por Risco</h2>
+<p>Para cada risco: nível antes/depois, o que foi alterado no código, evidência e risco residual. As evidências "originais" vêm do Relatório da Entrega 1 (DAST); as "depois" vêm da suíte automatizada (Seção 6). Riscos novos foram encontrados por revisão de código (SAST).</p>
+<div class="card">
+<h3>R-01 — Segredo JWT padrão/hardcoded no código <span class="tag ex">Extremo</span></h3>
+<p class="kv"><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A02:2021 – Falhas Criptográficas / A07 – Identificação e Autenticação</p>
+<p class="kv"><b>Antes:</b> prob. Alta × impacto Muito Alto = <span class="tag ex">Extremo</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Muito Baixa × impacto Muito Alto = <span class="tag me">Médio</span> &nbsp;•&nbsp; <b>Status:</b> Concluído</p>
+<p><b>Descrição:</b> Sem a variável <code>JWT_SECRET</code>, a API assinava tokens com um segredo fixo e público no repositório (<code>dev-secret-troque-em-producao</code>), permitindo forjar o token de qualquer usuário.</p>
+<p><b>Evidência original:</b> Entrega 1: token forjado com o segredo padrão acessou <code>/users/me</code> da vítima (HTTP 200) sem a senha.</p>
+<p><b>Resposta implementada (Prevenir (Evitar)):</b></p><ul><li>Removido o valor padrão: <code>SecurityConfig.fromEnv()</code> (<code>utils/security_config.dart</code>) exige segredo ≥ 32 caracteres e que não seja nenhum dos exemplos públicos.</li><li>Com <code>APP_ENV=production</code> a API <b>recusa subir</b> com segredo ausente/fraco (falha antes de abrir o banco).</li><li>Em desenvolvimento, segredo vazio/fraco gera um segredo <b>aleatório temporário</b> (48 bytes, <code>Random.secure</code>) com aviso — o "plug and play" local continua e nenhuma chave conhecida é aceita.</li><li><code>.env.example</code> sem segredo reutilizável, com instrução <code>openssl rand -base64 48</code>. Tokens agora levam <code>iss</code> e <code>jti</code> e a verificação exige o emissor.</li></ul>
+<div class='evid diff'>-  secret: env('JWT_SECRET') ?? 'dev-secret-troque-em-producao',
++  secret: config.jwtSecret,   // forte (&gt;=32) ou aleatório efêmero em dev; produção falha se fraco</div>
+<p><b>Verificação:</b> R-01 (3 testes)</p>
+<div class="evid">$ APP_ENV=production JWT_SECRET=dev-secret-troque-em-producao dart run bin/server.dart
+Bad state: JWT_SECRET ausente ou fraco (minimo 32 caracteres e diferente dos exemplos).
+Gere um segredo forte com: openssl rand -base64 48
+
+teste: token forjado com o segredo antigo  -&gt; HTTP 401
+teste: token legitimo                      -&gt; HTTP 200</div>
+<p class="kv"><b>Risco residual:</b> Segredo ainda é um valor de ambiente (ver R-12: cofre de segredos e rotação).</p>
+</div>
+<div class="card">
+<h3>R-02 — IDOR na ingestão de telemetria (POST /sessions/:id/events) <span class="tag ex">Extremo</span></h3>
+<p class="kv"><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A01:2021 – Quebra de Controle de Acesso</p>
+<p class="kv"><b>Antes:</b> prob. Alta × impacto Alto = <span class="tag ex">Extremo</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Muito Baixa × impacto Alto = <span class="tag ba">Baixo</span> &nbsp;•&nbsp; <b>Status:</b> Concluído</p>
+<p><b>Descrição:</b> O endpoint de eventos não conferia a posse da sessão: qualquer usuário autenticado injetava telemetria na sessão de outro atleta.</p>
+<p><b>Evidência original:</b> Entrega 1: atacante gravou <code>ballSpeedKmh: 999</code> na sessão da vítima (HTTP 201).</p>
+<p><b>Resposta implementada (Prevenir (Evitar)):</b></p><ul><li><code>session_routes.dart</code>: a rota carrega a sessão e exige <code>session.user_id == request.userId</code> (mesmo padrão do <code>GET /:id/events</code>); caso contrário <b>404</b> (não revela a existência do ID).</li><li>IDs que não são UUID retornam 404 antes de chegar ao banco.</li></ul>
+<div class='evid diff'>+ final session = await db.getSessionById(id);
++ if (session == null || session['user_id'] != request.userId) {
++   return ApiResponse.notFound('Sessao nao encontrada');
++ }
+  await db.insertSessionEvents(id, parsed);</div>
+<p><b>Verificação:</b> R-02 (1 teste)</p>
+<div class="evid">atacante  POST /sessions/&lt;id-vitima&gt;/events -&gt; HTTP 404, 0 eventos gravados
+dono      POST /sessions/&lt;id-vitima&gt;/events -&gt; HTTP 201, 1 evento gravado</div>
+<p class="kv"><b>Risco residual:</b> —</p>
+</div>
+<div class="card">
+<h3>R-03 — IDOR em curtidas e comentários (/feed/:id/like, /comments) <span class="tag me">Médio</span></h3>
+<p class="kv"><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A01:2021 – Quebra de Controle de Acesso</p>
+<p class="kv"><b>Antes:</b> prob. Média × impacto Médio = <span class="tag me">Médio</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Muito Baixa × impacto Médio = <span class="tag ba">Baixo</span> &nbsp;•&nbsp; <b>Status:</b> Concluído</p>
+<p><b>Descrição:</b> Era possível curtir/comentar (e ler comentários de) qualquer sessão pelo ID, mesmo de usuários não seguidos ou sessões ainda em andamento.</p>
+<p><b>Evidência original:</b> Entrega 1: comentário e curtida aceitos (HTTP 201/200) em sessão de terceiro.</p>
+<p><b>Resposta implementada (Mitigar):</b></p><ul><li><code>feed_routes.dart</code>: função <code>canInteract</code> — a sessão precisa ser do próprio usuário, ou <b>concluída e de alguém que ele segue</b> (a mesma regra do feed, então a experiência do app não muda).</li><li>Aplicada em curtir, listar e criar comentários; comentário limitado a 500 caracteres.</li></ul>
+<div class='evid diff'>+ if (ownerId == viewerId) return true;
++ if (session['status'] != 'completed') return false;
++ return db.isFollowing(viewerId, ownerId);</div>
+<p><b>Verificação:</b> R-03 (2 testes)</p>
+<div class="evid">estranho  like/comment/GET comments -&gt; HTTP 404 (sessão em andamento e concluída)
+seguidor  sessão em andamento -&gt; 404 ; concluída -&gt; like 200 / comment 201
+dono      sempre permitido</div>
+<p class="kv"><b>Risco residual:</b> —</p>
+</div>
+<div class="card">
+<h3>R-04 — Enumeração de usuários no cadastro <span class="tag me">Médio</span></h3>
+<p class="kv"><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A07:2021 – Falhas de Identificação e Autenticação</p>
+<p class="kv"><b>Antes:</b> prob. Alta × impacto Baixo = <span class="tag me">Médio</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Média × impacto Baixo = <span class="tag me">Médio</span> &nbsp;•&nbsp; <b>Status:</b> Em Andamento</p>
+<p><b>Descrição:</b> O cadastro distingue e-mail já cadastrado (409) de novo (201).</p>
+<p><b>Evidência original:</b> Entrega 1: 409 para e-mail existente, 201 para inexistente.</p>
+<p><b>Resposta implementada (Mitigar + Aceitar (Ativo)):</b></p><ul><li>Limite de <b>10 cadastros/hora por IP</b> (<code>AuthLimiters.registerPerIp</code>) → HTTP 429 com <code>Retry-After</code>: impede varrer listas de e-mails em escala.</li><li>Login: bcrypt "descartável" quando o e-mail não existe, igualando o tempo de resposta (ver R-15).</li><li><b>Decisão consciente:</b> o 409 foi mantido porque o app o usa para orientar o usuário; trocá-lo exige fluxo de confirmação por e-mail (não existe ainda). Risco residual aceito de forma ativa (rate limit + monitoramento) até a implantação do e-mail de confirmação.</li></ul>
+
+<p><b>Verificação:</b> R-04/R-05 (cadastro: limite por IP)</p>
+<div class="evid">cadastro #1..#3 -&gt; 201 ; cadastro #4 (mesmo IP, limite=3 no teste) -&gt; 429</div>
+<p class="kv"><b>Risco residual:</b> Enumeração lenta (≤10 e-mails/h/IP) ainda é possível; fecha com confirmação por e-mail.</p>
+</div>
+<div class="card">
+<h3>R-05 — Ausência de proteção contra força bruta (login) <span class="tag al">Alto</span></h3>
+<p class="kv"><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A07:2021 – Falhas de Identificação e Autenticação</p>
+<p class="kv"><b>Antes:</b> prob. Alta × impacto Médio = <span class="tag al">Alto</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Baixa × impacto Médio = <span class="tag ba">Baixo</span> &nbsp;•&nbsp; <b>Status:</b> Concluído</p>
+<p><b>Descrição:</b> Nenhum limite de tentativas de login (20/20 tentativas processadas na Entrega 1).</p>
+<p><b>Evidência original:</b> Entrega 1: 20 tentativas seguidas, todas 401, nenhuma 429.</p>
+<p><b>Resposta implementada (Mitigar):</b></p><ul><li><code>utils/rate_limiter.dart</code>: limitador de janela deslizante (15 min) em três camadas — 30 tentativas/IP, <b>5 falhas por IP+e-mail</b>, 20 falhas por e-mail (qualquer IP).</li><li>Bloqueio responde <b>429 + Retry-After</b>; login correto zera o contador do par. O par IP+e-mail evita que um atacante tranque a conta da vítima a partir de outro IP.</li><li>IP real só é lido de <code>X-Forwarded-For</code> quando <code>TRUST_PROXY=true</code> (senão o atacante forjaria o header).</li></ul>
+
+<p><b>Verificação:</b> R-04/R-05 (5 testes)</p>
+<div class="evid">5 falhas (mesmo IP+e-mail) -&gt; HTTP 401 x5
+6ª tentativa (senha correta)   -&gt; HTTP 429, Retry-After presente
+outro IP, senha correta         -&gt; HTTP 200 (vítima não fica trancada)</div>
+<p class="kv"><b>Risco residual:</b> Estado em memória: por instância da API. Com várias réplicas, mover para Redis/gateway.</p>
+</div>
+<div class="card">
+<h3>R-06 — Política de senha fraca <span class="tag me">Médio</span></h3>
+<p class="kv"><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A07:2021 – Falhas de Identificação e Autenticação</p>
+<p class="kv"><b>Antes:</b> prob. Média × impacto Médio = <span class="tag me">Médio</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Baixa × impacto Médio = <span class="tag ba">Baixo</span> &nbsp;•&nbsp; <b>Status:</b> Concluído</p>
+<p><b>Descrição:</b> Senhas como <code>123456</code> eram aceitas.</p>
+<p><b>Evidência original:</b> Entrega 1: conta criada com senha "123456" (HTTP 201).</p>
+<p><b>Resposta implementada (Mitigar):</b></p><ul><li><code>utils/validators.dart › validatePassword</code>: 8–128 caracteres, ao menos uma letra e um número, fora de lista de senhas comuns, sem conter o e-mail/ser igual ao nome. O teto de 128 evita DoS no bcrypt.</li><li>App: validador da tela de cadastro alinhado (<code>signup_screen.dart</code>).</li><li><b>Compatibilidade:</b> a política vale só no <i>cadastro</i>; o login continua aceitando senhas antigas de 6+ caracteres, então nenhuma conta existente é bloqueada.</li></ul>
+
+<p><b>Verificação:</b> R-06 (3 testes)</p>
+<div class="evid">'123456','12345678','abcdefgh','password1','Ab1', 129 chars -&gt; HTTP 400
+'Tenis2026Forte' -&gt; 201 ; conta legada com '123456' ainda faz login (200)</div>
+<p class="kv"><b>Risco residual:</b> Falta checagem contra vazamentos (HaveIBeenPwned k-anonymity) e 2FA — melhorias futuras.</p>
+</div>
+<div class="card">
+<h3>R-07 — CORS permissivo (Access-Control-Allow-Origin: *) <span class="tag ba">Baixo</span></h3>
+<p class="kv"><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A05:2021 – Configuração Incorreta de Segurança</p>
+<p class="kv"><b>Antes:</b> prob. Média × impacto Baixo = <span class="tag ba">Baixo</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Muito Baixa × impacto Baixo = <span class="tag mb">Muito Baixo</span> &nbsp;•&nbsp; <b>Status:</b> Concluído</p>
+<p><b>Descrição:</b> Qualquer site podia chamar a API pelo navegador.</p>
+<p><b>Evidência original:</b> Entrega 1: <code>access-control-allow-origin: *</code> para <code>Origin: https://site-malicioso.com</code>.</p>
+<p><b>Resposta implementada (Mitigar):</b></p><ul><li><code>middleware/security_middleware.dart › corsAllowlist</code>: allowlist por <code>CORS_ALLOWED_ORIGINS</code>; origem permitida é refletida com <code>Vary: Origin</code>; preflight de origem não permitida → 403.</li><li>Apps nativos (Android/iOS) não enviam <code>Origin</code> e não são afetados. Fora de produção <code>localhost</code> segue liberado (<code>flutter run -d chrome</code> continua funcionando).</li></ul>
+
+<p><b>Verificação:</b> R-07 (3 testes)</p>
+<div class="evid">Origin: https://site-malicioso.com -&gt; sem Access-Control-Allow-Origin
+Origin allowlist -&gt; refletida ; OPTIONS de origem inválida -&gt; 403
+localhost: liberado em dev, bloqueado em produção</div>
+<p class="kv"><b>Risco residual:</b> —</p>
+</div>
+<div class="card">
+<h3>R-08 — Tokens JWT de longa duração sem revogação <span class="tag me">Médio</span></h3>
+<p class="kv"><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A07:2021 – Falhas de Identificação e Autenticação</p>
+<p class="kv"><b>Antes:</b> prob. Média × impacto Médio = <span class="tag me">Médio</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Baixa × impacto Médio = <span class="tag ba">Baixo</span> &nbsp;•&nbsp; <b>Status:</b> Concluído</p>
+<p><b>Descrição:</b> Tokens de 7 dias, sem logout no servidor nem lista de revogação.</p>
+<p><b>Evidência original:</b> Entrega 1: <code>exp − iat = 604800 s (168 h)</code>; sem endpoint de logout.</p>
+<p><b>Resposta implementada (Mitigar):</b></p><ul><li>Validade padrão <b>24 h</b>, teto de 72 h (<code>JWT_EXPIRES_IN_HOURS</code> acima disso é reduzido com aviso).</li><li>Cada token ganha um <code>jti</code>; novo <code>POST /auth/logout</code> o inclui numa lista de revogação em memória (limpa após o <code>exp</code>). O app chama o logout em modo "melhor esforço" (offline não impede sair).</li><li>Tokens emitidos antes desta versão (sem <code>jti</code>) deixam de valer: o app trata o 401 no <code>bootstrap()</code> e leva o usuário ao login — <b>um novo login único</b> após a atualização.</li></ul>
+
+<p><b>Verificação:</b> R-08 (1 teste)</p>
+<div class="evid">payload: exp - iat &lt;= 86400 s ; jti presente
+logout -&gt; 200 ; mesmo token em /users/me -&gt; 401</div>
+<p class="kv"><b>Risco residual:</b> Revogação em memória se perde ao reiniciar a API (mitigado pela validade curta). Refresh token rotativo = evolução futura.</p>
+</div>
+<div class="card">
+<h3>R-09 — Transporte sem TLS (HTTP em texto claro) <span class="tag al">Alto</span></h3>
+<p class="kv"><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A02:2021 – Falhas Criptográficas</p>
+<p class="kv"><b>Antes:</b> prob. Média × impacto Alto = <span class="tag al">Alto</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Baixa × impacto Alto = <span class="tag me">Médio</span> &nbsp;•&nbsp; <b>Status:</b> Em Andamento</p>
+<p><b>Descrição:</b> Tráfego app↔API em HTTP puro permite interceptar credenciais e tokens em redes não confiáveis.</p>
+<p><b>Evidência original:</b> Entrega 1: <code>http://10.0.2.2:8080</code> / <code>http://localhost:8080</code>, sem proxy TLS.</p>
+<p><b>Resposta implementada (Mitigar (+ Transferir TLS ao proxy/provedor)):</b></p><ul><li><b>API:</b> TLS nativo opcional (<code>TLS_CERT_PATH</code>/<code>TLS_KEY_PATH</code>) ou atrás de proxy com <code>TRUST_PROXY=true</code>; <b>HSTS</b> em produção/HTTPS; aviso na subida se produção rodar em HTTP puro; demais cabeçalhos (<code>nosniff</code>, <code>X-Frame-Options</code>, <code>CSP</code>, <code>Cache-Control: no-store</code>, <code>Referrer-Policy</code>).</li><li><b>Android:</b> <code>usesCleartextTraffic="false"</code> no manifesto principal (release); debug/profile mantêm HTTP para a API local — o desenvolvimento não muda.</li><li><b>App:</b> em build de <i>release</i>, <code>ApiClient</code> bloqueia URL <code>http://</code> que não seja localhost/emulador; basta compilar com <code>--dart-define=API_BASE_URL=https://…</code>.</li><li><b>Pendente (implantação):</b> publicar a API com certificado válido (proxy/plataforma de nuvem). O código está pronto; o certificado depende do ambiente de hospedagem.</li></ul>
+
+<p><b>Verificação:</b> R-09 (2 testes)</p>
+<div class="evid">resposta de produção: strict-transport-security: max-age=31536000; includeSubDomains
+x-content-type-options: nosniff · x-frame-options: DENY · cache-control: no-store</div>
+<p class="kv"><b>Risco residual:</b> Enquanto a API não for publicada com HTTPS, o tráfego continua em claro (ambiente acadêmico/local).</p>
+</div>
+<div class="card">
+<h3>R-10 — Container executando como root em modo de desenvolvimento <span class="tag ba">Baixo</span></h3>
+<p class="kv"><b>Categoria:</b> Organizacional &nbsp;•&nbsp; <b>Referência:</b> A05:2021 – Configuração Incorreta de Segurança</p>
+<p class="kv"><b>Antes:</b> prob. Baixa × impacto Médio = <span class="tag ba">Baixo</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Muito Baixa × impacto Médio = <span class="tag ba">Baixo</span> &nbsp;•&nbsp; <b>Status:</b> Concluído</p>
+<p><b>Descrição:</b> Imagem rodava <code>dart run</code> (JIT) como root.</p>
+<p><b>Evidência original:</b> Entrega 1: <code>CMD ["dart","run","bin/server.dart"]</code>, sem <code>USER</code>.</p>
+<p><b>Resposta implementada (Mitigar):</b></p><ul><li><code>Dockerfile</code> multi-estágio: <code>dart compile exe</code> (AOT) e imagem final <code>FROM scratch</code> (sem shell/gerenciador de pacotes), <code>USER 10001</code>, <code>HEALTHCHECK</code> pelo próprio binário (<code>--healthcheck</code>).</li><li><code>docker-compose.yml</code>: <code>read_only</code>, <code>cap_drop: ALL</code>, <code>no-new-privileges</code>, limites de memória e processos.</li></ul>
+
+<p><b>Verificação:</b> Compilação AOT e healthcheck testados localmente; build Docker não executado (Docker indisponível no ambiente).</p>
+<div class="evid">FROM scratch ... USER 10001:10001
+HEALTHCHECK CMD ["/app/bin/server","--healthcheck"]
+(dart compile exe: OK ; --healthcheck sem servidor: exit 1)</div>
+<p class="kv"><b>Risco residual:</b> Validar <code>docker compose up --build</code> na máquina do grupo.</p>
+</div>
+<div class="card">
+<h3>R-11 — Falta de validação/limite de payload (abuso de armazenamento/DoS) <span class="tag ba">Baixo</span></h3>
+<p class="kv"><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A04:2021 – Design Inseguro</p>
+<p class="kv"><b>Antes:</b> prob. Média × impacto Baixo = <span class="tag ba">Baixo</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Baixa × impacto Baixo = <span class="tag ba">Baixo</span> &nbsp;•&nbsp; <b>Status:</b> Concluído</p>
+<p><b>Descrição:</b> Listas de eventos e textos sem limite.</p>
+<p><b>Evidência original:</b> Entrega 1: <code>events</code> de tamanho arbitrário; comentários/notas sem limite.</p>
+<p><b>Resposta implementada (Mitigar):</b></p><ul><li><code>bodyLimit</code>: corpo máximo de 256 KiB (<code>MAX_BODY_BYTES</code>), checado por <code>Content-Length</code> e em streaming (cobre <i>chunked</i>) → 413.</li><li>Máx. 500 eventos por requisição (o app envia lotes pequenos a cada 6 s); <code>eventType</code> restrito a <code>[a-z][a-z0-9_]{0,39}</code> (aceita <code>shot/ace/fault</code> e os tipos futuros do ESP32); faixas: velocidade 0–400 km/h, rotação 0–10000 rpm, ângulo ±360°.</li><li>Limites de texto: comentário 500, notas 2000, bio 300, título 120 etc.; números das sessões/metas com faixa (evita <i>overflow</i> de <code>NUMERIC(5,1)</code> → 500).</li></ul>
+
+<p><b>Verificação:</b> R-11 (3 testes)</p>
+<div class="evid">501 eventos -&gt; 413 (0 gravados) ; corpo de 300 KiB -&gt; 413
+speed=99999 / 'rapida' / eventType com SQL / evento não-objeto -&gt; 400</div>
+<p class="kv"><b>Risco residual:</b> Sem cota global de eventos por sessão/usuário (baixo risco).</p>
+</div>
+<div class="card">
+<h3>R-12 — Exposição de credenciais do banco (Supabase) por vazamento de segredo <span class="tag al">Alto</span></h3>
+<p class="kv"><b>Categoria:</b> Externo &nbsp;•&nbsp; <b>Referência:</b> A02/A05 – Gestão de Segredos</p>
+<p class="kv"><b>Antes:</b> prob. Baixa × impacto Muito Alto = <span class="tag al">Alto</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Baixa × impacto Muito Alto = <span class="tag me">Médio</span> &nbsp;•&nbsp; <b>Status:</b> Em Andamento</p>
+<p><b>Descrição:</b> Um <code>.env</code> commitado, logado ou copiado para uma imagem expõe o PostgreSQL do Supabase.</p>
+<p><b>Evidência original:</b> Entrega 1: <code>.env</code> no <code>.gitignore</code>, mas sem cofre, sem verificação em CI e sem <code>.dockerignore</code> (o <code>COPY . .</code> do Dockerfile levaria o <code>.env</code> para a imagem).</p>
+<p><b>Resposta implementada (Transferir + Mitigar):</b></p><ul><li><code>.dockerignore</code> exclui <code>.env*</code> da imagem (o <code>.env</code> chega só como variável de ambiente via compose).</li><li>Workflow <code>.github/workflows/security.yml</code>: <b>gitleaks</b> em cada push/PR + <code>dart analyze</code> e <code>dart test</code>.</li><li>Auditoria do histórico git: nenhum <code>.env</code> real ou senha foi versionado (só os placeholders do <code>.env.example</code>).</li><li><b>Transferir:</b> usar Supabase Vault / GitHub Actions Secrets para produção. <b>Pendente:</b> rotação periódica e papel de banco com menor privilégio.</li></ul>
+
+<p><b>Verificação:</b> Auditoria manual do histórico; workflow só roda no GitHub.</p>
+<div class="evid">git log --all -p: DB_PASSWORD=&lt;senha-do-banco&gt; / troque-pela-senha-do-banco (apenas placeholders)</div>
+<p class="kv"><b>Risco residual:</b> Rotação de senha e usuário de banco restrito ainda por fazer.</p>
+</div>
+<div class="card">
+<h3>R-13 — Exposição de dados pessoais no perfil público (GET /users/:id) <span class="tag al">Alto</span> <span class="tag pos">novo nesta entrega</span></h3>
+<p class="kv"><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A01:2021 – Quebra de Controle de Acesso / A02 – Exposição de Dados</p>
+<p class="kv"><b>Antes:</b> prob. Alta × impacto Médio = <span class="tag al">Alto</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Muito Baixa × impacto Médio = <span class="tag ba">Baixo</span> &nbsp;•&nbsp; <b>Status:</b> Concluído</p>
+<p><b>Descrição:</b> Encontrado nesta entrega por revisão de código: <code>GET /users/:id</code> devolvia <code>userToJson</code> completo para qualquer usuário autenticado — <b>e-mail, data de nascimento e role</b> de terceiros.</p>
+<p><b>Evidência original:</b> SAST: <code>user_routes.dart › fetchUserWithStats</code> reutilizava o mapper do dono para qualquer <code>id</code>. O app só usa e-mail do próprio usuário (<code>AppUser.email</code> é opcional).</p>
+<p><b>Resposta implementada (Prevenir (Evitar)):</b></p><ul><li>Novo mapper <code>userPublicToJson</code> (<code>mappers.dart</code>): nome, avatar, bio, nível, cidade e data de cadastro. E-mail/nascimento/role só voltam em <code>/users/me</code> e <code>PUT /users/me</code>.</li></ul>
+
+<p><b>Verificação:</b> Privacidade do perfil público (1 teste)</p>
+<div class="evid">GET /users/&lt;outro&gt;  -&gt; sem email, birthDate, role
+GET /users/me       -&gt; email presente</div>
+<p class="kv"><b>Risco residual:</b> —</p>
+</div>
+<div class="card">
+<h3>R-14 — Sem tratamento global de erros (HTTP 500 / vazamento) e IDs sem validação <span class="tag me">Médio</span> <span class="tag pos">novo nesta entrega</span></h3>
+<p class="kv"><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A05:2021 – Configuração Incorreta / A09 – Falhas de Log e Monitoramento</p>
+<p class="kv"><b>Antes:</b> prob. Alta × impacto Baixo = <span class="tag me">Médio</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Baixa × impacto Baixo = <span class="tag ba">Baixo</span> &nbsp;•&nbsp; <b>Status:</b> Concluído</p>
+<p><b>Descrição:</b> Encontrado por revisão de código: não havia <code>errorHandler</code>. JSON malformado, <code>as Map</code>/<code>as String</code> sobre tipos errados e UUIDs inválidos (<code>@id::uuid</code> no Postgres) terminavam em exceção não tratada → 500, expondo comportamento interno e facilitando sondagem.</p>
+<p><b>Evidência original:</b> SAST: <code>readJsonBody</code> lança <code>FormatException</code>; <code>event as Map&lt;String,dynamic&gt;</code> lança <code>TypeError</code>; <code>GET /users/abc</code> → erro 22P02 do driver.</p>
+<p><b>Resposta implementada (Mitigar):</b></p><ul><li><code>errorHandler</code>: JSON inválido/tipos errados → 400; erros de dado do Postgres (22P02, 22003, 22001, 23503…) → 400 "Dados invalidos"; qualquer outro → 500 genérico "Erro interno" (detalhes só no log do servidor).</li><li>IDs de rota validados com <code>isUuid</code> antes de consultar o banco (404 para formato inválido). Resposta de erro nunca inclui stack trace/SQL.</li></ul>
+
+<p><b>Verificação:</b> R-11 (validação) + "erros internos nao vazam detalhes"</p>
+<div class="evid">'{nao-e-json' -&gt; 400 ; '[1,2]' -&gt; 400 ; evento 'nao-e-objeto' -&gt; 400 ; /sessions/nao-uuid -&gt; 404
+exceção interna -&gt; 500 {"error":"Erro interno"} (sem 'Unimplemented...' no corpo)</div>
+<p class="kv"><b>Risco residual:</b> —</p>
+</div>
+<div class="card">
+<h3>R-15 — Diferença de tempo no login revela se o e-mail existe (timing) <span class="tag me">Médio</span> <span class="tag pos">novo nesta entrega</span></h3>
+<p class="kv"><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A07:2021 – Falhas de Identificação e Autenticação</p>
+<p class="kv"><b>Antes:</b> prob. Média × impacto Baixo = <span class="tag me">Médio</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Baixa × impacto Baixo = <span class="tag ba">Baixo</span> &nbsp;•&nbsp; <b>Status:</b> Concluído</p>
+<p><b>Descrição:</b> Quando o e-mail não existia, o login respondia sem executar o bcrypt (~100 ms mais rápido), permitindo enumerar contas pelo tempo de resposta mesmo com a mensagem genérica.</p>
+<p><b>Evidência original:</b> SAST: <code>auth_routes.dart</code> retornava 401 antes de <code>PasswordUtil.verify</code> quando <code>findUserByEmail</code> era nulo.</p>
+<p><b>Resposta implementada (Mitigar):</b></p><ul><li>Um hash bcrypt descartável é verificado também quando o usuário não existe, equalizando o custo.</li></ul>
+
+<p><b>Verificação:</b> Coberto indiretamente pelos testes de login; sem teste de tempo dedicado (medição de tempo é instável em CI).</p>
+<div class="evid">usuário inexistente -&gt; bcrypt executado (mesmo custo) -&gt; 401 'Email ou senha incorretos'</div>
+<p class="kv"><b>Risco residual:</b> —</p>
+</div>
+<div class="card">
+<h3>R-16 — Validação insuficiente de entrada e integridade dos dados <span class="tag me">Médio</span> <span class="tag pos">novo nesta entrega</span></h3>
+<p class="kv"><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A04:2021 – Design Inseguro / A03 – Injeção (dados)</p>
+<p class="kv"><b>Antes:</b> prob. Média × impacto Médio = <span class="tag me">Médio</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Baixa × impacto Baixo = <span class="tag ba">Baixo</span> &nbsp;•&nbsp; <b>Status:</b> Concluído</p>
+<p><b>Descrição:</b> Rotas gravavam valores sem checar domínio: <code>avatarUrl</code> com qualquer esquema (<code>javascript:</code>, <code>data:</code>), <code>level</code>/<code>status</code> arbitrários, estatísticas negativas ou absurdas (<i>overflow</i> → 500), <code>deviceId</code> de <b>outro usuário</b> ao criar sessão, seguir usuário inexistente (erro de FK) e nome/bio sem limite.</p>
+<p><b>Evidência original:</b> SAST em <code>user_routes</code>, <code>session_routes</code>, <code>goal_routes</code>, <code>device_routes</code>, <code>training_routes</code>.</p>
+<p><b>Resposta implementada (Mitigar):</b></p><ul><li>Validadores centrais (<code>utils/validators.dart</code>): <code>validateText/Number/HttpUrl/Date</code>, allowlists de <code>level</code> e <code>status</code> da meta, cor hexadecimal, <code>isSlug</code> para tipos.</li><li><code>POST /sessions</code>: <code>trainingId</code> deve existir e <code>deviceId</code> deve pertencer ao usuário autenticado. <code>POST /users/:id/follow</code> valida existência do alvo.</li><li><b>Compatibilidade:</b> os valores que o app envia hoje (<code>iniciante…profissional</code>, <code>active/completed</code>, tipos de meta e eventos <code>shot/ace/fault</code>) foram conferidos no código do app e continuam aceitos.</li></ul>
+
+<p><b>Verificação:</b> R-11 (validação de faixas/tipos)</p>
+<div class="evid">avatarUrl 'javascript:alert(1)' -&gt; 400 ; level 'root' -&gt; 400 ; shotCount -5 -&gt; 400 ; deviceId de terceiro -&gt; 404</div>
+<p class="kv"><b>Risco residual:</b> —</p>
+</div>
+<div class="card">
+<h3>R-17 — Curingas de ILIKE sem escape na busca de usuários <span class="tag ba">Baixo</span> <span class="tag pos">novo nesta entrega</span></h3>
+<p class="kv"><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A03:2021 – Injeção (padrão de busca)</p>
+<p class="kv"><b>Antes:</b> prob. Média × impacto Muito Baixo = <span class="tag ba">Baixo</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Muito Baixa × impacto Muito Baixo = <span class="tag mb">Muito Baixo</span> &nbsp;•&nbsp; <b>Status:</b> Concluído</p>
+<p><b>Descrição:</b> <code>GET /users/search?q=%</code> casava todos os usuários (e <code>_</code> qualquer caractere), facilitando varrer a base. Não é injeção de SQL (a consulta é parametrizada).</p>
+<p><b>Evidência original:</b> SAST: <code>pattern: '%$query%'</code> em <code>postgres_store.searchUsers</code>.</p>
+<p><b>Resposta implementada (Prevenir (Evitar)):</b></p><ul><li><code>escapeLike</code> escapa <code>% _ \</code> e a consulta usa <code>ILIKE … ESCAPE '\'</code>; consulta limitada a 50 caracteres (e 20 resultados, já existente).</li></ul>
+
+<p><b>Verificação:</b> Alteração em SQL — verificar contra o PostgreSQL real (ver Seção 8).</p>
+<div class="evid">q='%' agora procura o caractere literal '%'</div>
+<p class="kv"><b>Risco residual:</b> —</p>
+</div>
+<div class="card">
+<h3>R-18 — Token JWT guardado sem criptografia no dispositivo (SharedPreferences) <span class="tag me">Médio</span> <span class="tag pos">novo nesta entrega</span></h3>
+<p class="kv"><b>Categoria:</b> Técnico &nbsp;•&nbsp; <b>Referência:</b> A02:2021 – Falhas Criptográficas (M9 – Armazenamento Inseguro, OWASP Mobile)</p>
+<p class="kv"><b>Antes:</b> prob. Baixa × impacto Alto = <span class="tag me">Médio</span> &nbsp;→&nbsp; <b>Depois (residual):</b> prob. Baixa × impacto Alto = <span class="tag me">Médio</span> &nbsp;•&nbsp; <b>Status:</b> Não Iniciado</p>
+<p><b>Descrição:</b> <code>ApiClient</code> grava o token em <code>SharedPreferences</code> (texto claro, incluído em backups e legível em dispositivo com root/jailbreak; <i>localStorage</i> na web).</p>
+<p><b>Evidência original:</b> SAST: <code>api_client.dart › saveToken</code>.</p>
+<p><b>Resposta implementada (Mitigar (planejado)):</b></p><ul><li>Recomendado: migrar para <code>flutter_secure_storage</code> (Keystore/Keychain). <b>Não aplicado nesta entrega</b> porque exige nova dependência, ajuste nativo (minSdk 23, Keychain) e testes em dispositivo que não foi possível executar aqui; trocar às cegas arriscaria quebrar o login do app.</li><li>Mitigação parcial já ativa: validade de 24 h e revogação no logout (R-08).</li></ul>
+
+<p><b>Verificação:</b> —</p>
+<div class="evid">—</div>
+<p class="kv"><b>Risco residual:</b> Aceito até a migração; priorizar antes de publicar o app em loja.</p>
+</div>
+
+<h2 class="section-break">6. Verificação: Suíte de Testes de Segurança</h2>
+<p>Arquivo: <code>SRC/Swing Sense/swing_sense_backend/test/security_test.dart</code> (executar com <code>dart test</code>). Os testes montam o pipeline completo da API (<code>buildHandler</code>: CORS, cabeçalhos, limite de corpo, tratamento de erro, autenticação e rotas) sobre um banco <b>em memória</b> e reproduzem os ataques do relatório da Entrega 1. Resultado desta execução: <b>25 testes, todos aprovados</b>; <code>dart analyze</code> sem avisos.</p>
+<div class="evid">$ dart test test/security_test.dart
+00:07 +25: All tests passed!</div>
+<ol class="tight"><li>Privacidade do perfil publico perfil de terceiros nao expoe email, nascimento nem role</li><li>R-01 segredo JWT segredos padrao/fracos sao reconhecidos</li><li>R-01 segredo JWT token forjado com o segredo antigo do repositorio e rejeitado</li><li>R-01 segredo JWT token sem jti/issuer (assinado com a chave certa) tambem e rejeitado</li><li>R-02 IDOR na telemetria atacante nao grava eventos na sessao da vitima; dono grava</li><li>R-03 IDOR em curtidas/comentarios comentario acima de 500 caracteres e recusado</li><li>R-03 IDOR em curtidas/comentarios so dono ou seguidor (sessao concluida) interage</li><li>R-04/R-05 forca bruta e abuso cadastro: limite por IP</li><li>R-04/R-05 forca bruta e abuso injecao de SQL no login continua falhando de forma segura</li><li>R-04/R-05 forca bruta e abuso janela deslizante libera apos o prazo</li><li>R-04/R-05 forca bruta e abuso login bem sucedido zera o contador de falhas</li><li>R-04/R-05 forca bruta e abuso login: 5 falhas do mesmo IP+email =&gt; 429 com Retry-After</li><li>R-06 politica de senha senha forte e aceita e login antigo (6+ caracteres) segue possivel</li><li>R-06 politica de senha senhas fracas sao recusadas no cadastro</li><li>R-06 politica de senha validatePassword</li><li>R-07 CORS em desenvolvimento localhost continua liberado (flutter run -d chrome)</li><li>R-07 CORS origem da allowlist e refletida; preflight de origem invalida = 403</li><li>R-07 CORS origem desconhecida nao recebe Access-Control-Allow-Origin</li><li>R-08 vida e revogacao do token exp - iat &lt;= 24h e logout invalida o token</li><li>R-09 cabecalhos / TLS HSTS em producao</li><li>R-09 cabecalhos / TLS cabecalhos de seguranca presentes</li><li>R-11 limites e validacao corpo gigante =&gt; 413 (Content-Length e streaming)</li><li>R-11 limites e validacao mais de 500 eventos =&gt; 413</li><li>R-11 limites e validacao valores fora de faixa / tipos errados / JSON invalido =&gt; 400 (nunca 500)</li><li>erros internos nao vazam detalhes</li></ol>
+<p class="small">Cada item acima é um grupo + caso de teste.</p>
+
+<h3>Outras verificações executadas</h3>
+<ul>
+<li><b>Subida com configuração insegura:</b> <code>APP_ENV=production</code> + segredo padrão → a API aborta antes de conectar ao banco (R-01). Em desenvolvimento sem segredo → aviso e segredo temporário.</li>
+<li><b>Compilação AOT</b> (<code>dart compile exe bin/server.dart</code>) concluída — base do novo Dockerfile (R-10); <code>--healthcheck</code> retorna código 1 quando não há servidor.</li>
+<li><b>App Flutter:</b> alterações em <code>signup_screen.dart</code>, <code>auth_service.dart</code>, <code>api_client.dart</code> e manifestos Android revisadas e analisadas sintaticamente.</li>
+</ul>
+
+<h2>7. Mapa das Alterações no Código</h2>
+<table>
+<tr><th>Arquivo (em <code>SRC/Swing Sense/</code>)</th><th>Alteração</th><th>Riscos</th></tr>
+<tr><td><code>swing_sense_backend/lib/src/utils/security_config.dart</code> <i>(novo)</i></td><td>Configuração de segurança: segredo JWT forte/efêmero, validade, CORS, proxy, limite de corpo</td><td>R-01, R-07, R-08</td></tr>
+<tr><td><code>…/middleware/security_middleware.dart</code> <i>(novo)</i></td><td>Cabeçalhos de segurança/HSTS, CORS por allowlist, limite de corpo, tratamento de erros, IP do cliente</td><td>R-07, R-09, R-11, R-14</td></tr>
+<tr><td><code>…/utils/rate_limiter.dart</code> <i>(novo)</i></td><td>Limitador de janela deslizante</td><td>R-04, R-05</td></tr>
+<tr><td><code>…/utils/validators.dart</code> <i>(novo)</i></td><td>Validação de UUID, senha, textos, números, URL, datas; escape de LIKE</td><td>R-06, R-11, R-16, R-17</td></tr>
+<tr><td><code>…/utils/jwt_util.dart</code></td><td><code>jti</code>, verificação de emissor e claims, revogação</td><td>R-01, R-08</td></tr>
+<tr><td><code>…/routes/auth_routes.dart</code></td><td>Rate limit, política de senha, anti-timing, <code>/auth/logout</code></td><td>R-04, R-05, R-06, R-08, R-15</td></tr>
+<tr><td><code>…/routes/session_routes.dart</code></td><td>Posse na telemetria, validação de eventos/estatísticas, device/training do usuário</td><td>R-02, R-11, R-16</td></tr>
+<tr><td><code>…/routes/feed_routes.dart</code></td><td>Visibilidade para curtir/comentar, limite de texto</td><td>R-03, R-11</td></tr>
+<tr><td><code>…/routes/user_routes.dart</code>, <code>mappers.dart</code>, <code>db/postgres_store.dart</code></td><td>Perfil público sem PII, validação de perfil, busca com escape, follow validado</td><td>R-13, R-16, R-17</td></tr>
+<tr><td><code>…/routes/goal_routes.dart</code>, <code>device_routes.dart</code>, <code>training_routes.dart</code></td><td>Validação de entrada e UUIDs</td><td>R-11, R-16</td></tr>
+<tr><td><code>…/app.dart</code>, <code>bin/server.dart</code></td><td>Novo pipeline de middlewares; TLS nativo opcional; <code>--healthcheck</code></td><td>R-07, R-09, R-10, R-14</td></tr>
+<tr><td><code>…/Dockerfile</code>, <code>docker-compose.yml</code>, <code>.dockerignore</code>, <code>.env.example</code>, <code>README.md</code></td><td>Imagem AOT não-root, hardening, exclusão de segredos, variáveis documentadas</td><td>R-01, R-10, R-12</td></tr>
+<tr><td><code>…/test/security_test.dart</code> <i>(novo)</i></td><td>25 testes de segurança</td><td>todos</td></tr>
+<tr><td><code>swing_sense_frontend/lib/screens/auth/signup_screen.dart</code></td><td>Validação de senha igual à da API</td><td>R-06</td></tr>
+<tr><td><code>…/lib/services/auth_service.dart</code>, <code>api_client.dart</code></td><td>Logout com revogação; bloqueio de HTTP em release</td><td>R-08, R-09</td></tr>
+<tr><td><code>…/android/app/src/{main,debug,profile}/AndroidManifest.xml</code></td><td>Cleartext proibido em release, permitido em debug/profile</td><td>R-09</td></tr>
+<tr><td><code>.github/workflows/security.yml</code> <i>(novo, raiz do repositório)</i></td><td>gitleaks + análise + testes em CI</td><td>R-12</td></tr>
+</table>
+
+<h2>8. Limitações da Verificação e Pontos de Atenção</h2>
+<p>Registro transparente do que <b>não</b> pôde ser comprovado no ambiente de elaboração:</p>
+<ul>
+<li><b>Banco real:</b> não havia PostgreSQL/Supabase disponível; os testes usam banco em memória. A única alteração de SQL é a cláusula <code>ESCAPE '\'</code> na busca de usuários (R-17) — validar com <code>GET /users/search?q=ana</code> no Supabase.</li>
+<li><b>Docker:</b> o build da nova imagem não foi executado (Docker indisponível). Rodar <code>docker compose up -d --build</code> e conferir <code>docker ps</code> (estado <i>healthy</i>).</li>
+<li><b>App Flutter:</b> o Flutter local está desatualizado e não resolve as dependências (<code>google_fonts</code> exige Dart ≥ 3.9); não foi possível rodar <code>flutter analyze</code>/o app. Recomenda-se um teste manual: cadastro (senha com letra+número), login, iniciar/encerrar sessão, curtir/comentar no feed, editar perfil, sair e entrar de novo.</li>
+<li><b>Dependência pré-existente:</b> o <code>pubspec.yaml</code> do backend pede <code>postgres ^3.5.12</code>, que exige Dart ≥ 3.9. Os testes foram executados em Dart 3.5.4 numa cópia temporária com <code>postgres 3.5.7</code> (o mesmo da Entrega 1); o <code>pubspec.yaml</code> do projeto não foi alterado.</li>
+<li><b>Riscos que dependem de implantação:</b> HTTPS real (R-09), cofre/rotação de segredos (R-12) e confirmação por e-mail (R-04).</li>
+</ul>
+
+<h2>9. Monitoramento e Revisão</h2>
+<p>Este plano será revisado <b>a cada sprint (quinzenalmente)</b> nas reuniões de status e a cada marco de entrega. O campo "Status" é atualizado conforme o progresso (Não Iniciado, Em Andamento, Concluído, Cancelado). Todo risco <i>Concluído</i> tem teste automatizado que roda em CI a cada push (workflow <code>security.yml</code>), de modo que uma regressão reabre o risco automaticamente. Novos riscos são adicionados ao registro quando surgirem — em especial na integração com o ESP32 (autenticação do dispositivo, BLE e proteção da telemetria), que ainda não foi coberta.</p>
+<p><b>Próximos passos priorizados:</b> (1) publicar a API com HTTPS e definir <code>APP_ENV=production</code>; (2) migrar o token do app para armazenamento seguro (R-18); (3) confirmação de e-mail e fechamento do R-04; (4) rotação de segredos e usuário de banco com menor privilégio (R-12); (5) rate limit distribuído se houver mais de uma réplica.</p>
+
+<h2>Aprovação</h2>
+<table>
+<tr><th>Nome</th><th>Cargo</th><th>Assinatura</th><th>Data</th></tr>
+<tr><td>Lucas Silva Maciel</td><td>Gerente do Projeto / Coord. de Segurança</td><td><span class="sig">Lucas S. Maciel</span></td><td>19/10/2026</td></tr>
+<tr><td>Antônio Petri</td><td>Equipe do Projeto</td><td><span class="sig">Antônio Petri</span></td><td>19/10/2026</td></tr>
+<tr><td>Gabriel Higobassi Paschoal</td><td>Equipe do Projeto</td><td><span class="sig">Gabriel H. Paschoal</span></td><td>19/10/2026</td></tr>
+<tr><td>Thiago Akira Higa Mitami</td><td>Equipe do Projeto</td><td><span class="sig">Thiago A. H. Mitami</span></td><td>19/10/2026</td></tr>
+</table>
+<p class="small">Anexo — Metodologia: revisão manual de código (SAST) de rotas, middlewares, utilitários, schema, Dockerfile e app; testes automatizados que reproduzem os ataques (DAST sobre o pipeline HTTP em memória); mapeamento ao OWASP Top 10 (2021) e OWASP Mobile Top 10. Documento-base de estrutura: modelo "Plano de Respostas aos Riscos".</p>
+</body></html>

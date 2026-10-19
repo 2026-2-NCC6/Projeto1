@@ -1,0 +1,32 @@
+name: security
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  secrets-scan:
+    name: Varredura de segredos (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  backend-tests:
+    name: Testes de seguranca do backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: SRC/Swing Sense/swing_sense_backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - run: dart pub get
+      - run: dart analyze
+      - run: dart test

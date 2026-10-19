@@ -4,8 +4,11 @@ import '../../core/theme/app_colors.dart';
 import '../../models/device.dart';
 import '../../models/training.dart';
 import '../../services/api_client.dart';
+import '../../services/ble/ble_racket_service.dart';
+import '../../services/tacada_sync_service.dart';
 import '../../services/device_service.dart';
 import '../../services/session_service.dart';
+import '../../widgets/ble_racket_card.dart';
 import '../../widgets/primary_button.dart';
 import 'live_session_screen.dart';
 
@@ -25,11 +28,13 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
   bool _loadingDevice = true;
   bool _pairing = false;
   bool _starting = false;
+  bool _connectingRacket = false;
 
   @override
   void initState() {
     super.initState();
     _loadDevice();
+    TacadaSyncService.instance.flush(); // reenvia tacadas que ficaram na fila
   }
 
   Future<void> _loadDevice() async {
@@ -39,6 +44,28 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
     } catch (_) {
     } finally {
       if (mounted) setState(() => _loadingDevice = false);
+    }
+  }
+
+  /// Procura e conecta a raquete real (BLE) e registra o dispositivo no
+  /// backend para a sessao ser ligada a ele.
+  Future<void> _connectRealRacket() async {
+    setState(() => _connectingRacket = true);
+    try {
+      await BleRacketService.instance.connect();
+      final name = BleRacketService.instance.deviceName ?? 'SwingSense';
+      final device = await _deviceService.ensureReal(identifier: name);
+      if (mounted) setState(() => _device = device);
+    } on RacketConnectException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Raquete conectada, mas nao foi possivel registrar o dispositivo.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _connectingRacket = false);
     }
   }
 
@@ -60,13 +87,19 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
     setState(() => _starting = true);
     try {
       final session = await _sessionService.start(
-        trainingId: widget.preselectedTraining?.id,
+        // Treinos guiados locais tem id vazio: a sessao e criada sem trainingId.
+        trainingId: (widget.preselectedTraining?.id.isEmpty ?? true) ? null : widget.preselectedTraining!.id,
         deviceId: _device?.id,
         title: widget.preselectedTraining?.title ?? 'Treino livre',
       );
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => LiveSessionScreen(session: session)),
+        MaterialPageRoute(
+          builder: (_) => LiveSessionScreen(
+            session: session,
+            useRealRacket: BleRacketService.instance.isConnected && !(_device?.isSimulated ?? true),
+          ),
+        ),
       );
     } catch (e) {
       if (mounted) {
@@ -112,8 +145,15 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
               const Text('Raquete inteligente', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+              const SizedBox(height: 12),
+              BleRacketCard(onConnect: _connectRealRacket, busy: _connectingRacket),
               const SizedBox(height: 12),
               _loadingDevice
                   ? const LinearProgressIndicator(color: AppColors.green, backgroundColor: AppColors.surfaceElevated)
@@ -151,7 +191,11 @@ class _SessionSetupScreenState extends State<SessionSetupScreen> {
                             ],
                           ),
                         ),
-              const Spacer(),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
               PrimaryButton(
                 label: 'Comecar agora',
                 icon: Icons.play_arrow,

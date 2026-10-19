@@ -46,10 +46,47 @@ dart run bin/server.dart
 
 Voce vera `Swing Sense API rodando em http://0.0.0.0:8080`.
 
+### Seguranca (Entrega 2)
+
+Variaveis novas (todas opcionais em desenvolvimento - veja `.env.example`):
+
+| Variavel | Funcao |
+|----------|--------|
+| `APP_ENV` | `production` exige `JWT_SECRET` forte e ativa HSTS |
+| `JWT_SECRET` | Segredo >= 32 caracteres (`openssl rand -base64 48`). Vazio em dev => segredo aleatorio temporario |
+| `JWT_EXPIRES_IN_HOURS` | Validade do token (padrao 24, maximo 72) |
+| `CORS_ALLOWED_ORIGINS` | Allowlist de origens web (virgula) |
+| `TRUST_PROXY` | `true` apenas atras de proxy TLS confiavel |
+| `TLS_CERT_PATH` / `TLS_KEY_PATH` | TLS nativo (HTTPS) sem proxy |
+
+Testes de seguranca (rodam sem banco): `dart test`.
+
 ### Com Docker (opcional)
 
 ```bash
 docker compose up -d --build
+```
+
+## Tacadas da raquete real (BLE) - pendente: banco
+
+O app ja conecta na raquete por Bluetooth (`INTEGRACAO_APP_BLE.md`, na pasta
+acima) e envia as tacadas em lote para `POST /tacadas`. A rota
+(`lib/src/routes/tacada_routes.dart`) autentica, valida cada campo e entrega as
+linhas saneadas para `PgStore.insertTacadas`. **Falta so a persistencia:**
+
+1. Aplicar `lib/src/db/migrations/001_tacadas.sql` no Supabase (SQL Editor).
+2. Implementar `PgStore.insertTacadas` em `lib/src/db/postgres_store.dart` (o
+   comentario do metodo traz o contrato: chaves das linhas, idempotencia com
+   `ON CONFLICT (dispositivo_id, boot, seq) DO NOTHING`, transacao, retorno).
+3. Rodar `dart test` e testar de ponta a ponta com o app.
+
+Enquanto `insertTacadas` nao existir, a rota responde **501** e o app guarda as
+tacadas numa fila local e tenta de novo (nada se perde). O formato do corpo:
+
+```json
+{"tacadas": [{"dispositivoId": "SwingSense-A1B2", "boot": 2891734012, "seq": 37, "t": 152340,
+  "recebidoEm": "2026-10-19T12:00:00Z", "tipo": "FH", "incerto": false, "bola": null,
+  "acel": 80.4, "giro": 26.3, "vel": 95, "accx": 3.2, "v": 1, "sessionId": "<uuid opcional>"}]}
 ```
 
 ## Estrutura
@@ -58,7 +95,9 @@ docker compose up -d --build
 bin/server.dart          Entrypoint HTTP (abre o pool de conexao com o Supabase)
 lib/src/app.dart         Monta as rotas publicas e protegidas por JWT
 lib/src/db/              Database (pool Postgres), PgStore (queries) e schema.sql de referencia
-lib/src/middleware/       Middleware de autenticacao (Bearer JWT)
+lib/src/middleware/       Autenticacao (Bearer JWT) e seguranca (CORS, cabecalhos, limite de corpo, erros)
+lib/src/utils/            JWT, senha, validadores, rate limiter e configuracao de seguranca
+test/security_test.dart   Testes que reproduzem os ataques do relatorio e provam as correcoes
 lib/src/routes/           Um arquivo por recurso (auth, users, feed, trainings, sessions, goals, glossary, devices)
 lib/src/mappers.dart      Conversao das linhas do Postgres para JSON da API
 ```
@@ -69,6 +108,7 @@ lib/src/mappers.dart      Conversao das linhas do Postgres para JSON da API
 |--------|-------------------------------|-------------------------------------------------------|------|
 | POST   | /auth/register                | Cria conta                                             | nao  |
 | POST   | /auth/login                   | Login, retorna token JWT                               | nao  |
+| POST   | /auth/logout                  | Revoga o token atual                                    | nao  |
 | GET    | /glossary                     | Glossario de regras/fundamentos do tenis                | nao  |
 | GET    | /users/me                     | Perfil autenticado                                      | sim  |
 | PUT    | /users/me                     | Editar perfil                                           | sim  |

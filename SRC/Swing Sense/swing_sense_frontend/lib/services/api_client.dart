@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -44,6 +45,13 @@ class ApiClient {
 
   Uri _uri(String path, [Map<String, dynamic>? query]) {
     final cleanPath = path.startsWith('/') ? path : '/$path';
+    final base = Uri.parse(AppConfig.apiBaseUrl);
+    // R-09: em build de release so trafega por HTTPS (localhost/emulador
+    // continuam liberados para testes locais).
+    const localHosts = {'localhost', '127.0.0.1', '10.0.2.2'};
+    if (kReleaseMode && base.scheme != 'https' && !localHosts.contains(base.host)) {
+      throw ApiException('Conexao insegura bloqueada: configure API_BASE_URL com https://');
+    }
     return Uri.parse('${AppConfig.apiBaseUrl}$cleanPath').replace(
       queryParameters: query?.map((k, v) => MapEntry(k, v.toString())),
     );

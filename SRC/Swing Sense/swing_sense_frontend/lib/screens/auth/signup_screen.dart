@@ -101,7 +101,14 @@ class _SignupScreenState extends State<SignupScreen> {
                   obscureText: true,
                   prefixIcon: Icons.lock_outline,
                   textInputAction: TextInputAction.done,
-                  validator: (v) => (v == null || v.length < 6) ? 'Minimo de 6 caracteres' : null,
+                  validator: (v) {
+                    // Mesma politica da API (R-06): 8+ caracteres com letras e numeros.
+                    if (v == null || v.length < 8) return 'Minimo de 8 caracteres';
+                    if (!RegExp(r'[A-Za-z]').hasMatch(v) || !RegExp(r'[0-9]').hasMatch(v)) {
+                      return 'Use letras e numeros';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 20),
                 const Text('Qual seu nivel no tenis?', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),

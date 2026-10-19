@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../data/guided_trainings.dart';
+import '../../models/guided_training.dart';
 import '../../models/training.dart';
 import '../../models/user.dart';
 import '../../services/api_client.dart';
@@ -12,6 +14,7 @@ import '../../widgets/empty_state.dart';
 import '../../widgets/loading_indicator.dart';
 import '../../widgets/stat_pill.dart';
 import '../../widgets/user_avatar.dart';
+import '../guided/guided_training_screen.dart';
 import '../profile/other_profile_screen.dart';
 import '../training/training_detail_screen.dart';
 
@@ -106,8 +109,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
             _buildUserResults(),
             const Divider(height: 32, indent: 16, endIndent: 16),
           ],
+          const _GuidedSection(),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
             child: Text('Catalogo de treinos', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
           ),
           SizedBox(
@@ -237,6 +241,103 @@ class _TrainingCard extends StatelessWidget {
               ),
             ),
             const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+/// Carrossel dos treinos pre-prontos com animacao na quadra.
+class _GuidedSection extends StatelessWidget {
+  const _GuidedSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Text('Treinos guiados', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+        ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: Text(
+            'Treinos prontos com explicacao, dicas e animacao na quadra.',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          ),
+        ),
+        SizedBox(
+          height: 176,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: GuidedTrainings.all.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, i) => _GuidedCard(training: GuidedTrainings.all[i]),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _GuidedCard extends StatelessWidget {
+  const _GuidedCard({required this.training});
+  final GuidedTraining training;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => GuidedTrainingScreen(training: training)),
+      ),
+      child: Container(
+        width: 232,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.green.withOpacity(0.35)),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF123D25), Color(0xFF050505)],
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(color: AppColors.green, borderRadius: BorderRadius.circular(12)),
+              child: Text(
+                training.difficultyLabel,
+                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800, fontSize: 11),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              training.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, height: 1.2),
+            ),
+            const Spacer(),
+            Row(
+              children: [
+                const Icon(Icons.timer_outlined, size: 14, color: AppColors.textSecondary),
+                const SizedBox(width: 4),
+                Text('${training.durationMinutes} min', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                const SizedBox(width: 12),
+                const Icon(Icons.play_circle_outline, size: 14, color: AppColors.greenBright),
+                const SizedBox(width: 4),
+                Text('${training.exercises.length} exercicios',
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+              ],
+            ),
           ],
         ),
       ),

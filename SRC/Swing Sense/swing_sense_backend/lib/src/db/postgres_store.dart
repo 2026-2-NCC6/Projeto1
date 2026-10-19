@@ -1,6 +1,8 @@
 import 'package:postgres/postgres.dart';
 import 'package:uuid/uuid.dart';
 
+import '../utils/validators.dart';
+
 const _uuid = Uuid();
 
 /// Acesso ao PostgreSQL (Supabase) usado pelas rotas. Os nomes das tabelas
@@ -80,13 +82,13 @@ class PgStore {
     final result = await pool.execute(
       Sql.named('''
         SELECT * FROM usuarios
-        WHERE id <> @excludeId::uuid AND name ILIKE @pattern
+        WHERE id <> @excludeId::uuid AND name ILIKE @pattern ESCAPE '\\'
         ORDER BY name
         LIMIT @limit
       '''),
       parameters: {
         'excludeId': excludeUserId,
-        'pattern': '%$query%',
+        'pattern': '%${escapeLike(query)}%',
         'limit': limit,
       },
     );
@@ -533,6 +535,31 @@ class PgStore {
       Sql.named('DELETE FROM metas WHERE id = @id::uuid AND user_id = @userId::uuid'),
       parameters: {'id': id, 'userId': userId},
     );
+  }
+
+  // ---------------------------------------------------------------------
+  // tacadas (raquete real via BLE)
+  // ---------------------------------------------------------------------
+
+  /// TODO(banco): gravar as tacadas recebidas em `POST /tacadas`.
+  ///
+  /// Pre-requisito: aplicar `lib/src/db/migrations/001_tacadas.sql` no Supabase.
+  ///
+  /// `rows` ja vem validado e saneado pela rota (tipos e faixas conferidos; o
+  /// usuario e a sessao ja foram verificados). Cada item tem as chaves:
+  /// sessionId (String?), dispositivoId, boot, seq, tMs, recebidoEm (DateTime
+  /// UTC), tipo ('FH'|'BH'), incerto, bola (bool?), acel, giro, vel, accx,
+  /// versaoFormato.
+  ///
+  /// Deve ser IDEMPOTENTE: `INSERT ... ON CONFLICT (dispositivo_id, boot, seq)
+  /// DO NOTHING`, dentro de uma transacao (`pool.runTx`), com `user_id`
+  /// vindo de [userId]. Retorna quantas linhas foram realmente inseridas
+  /// (duplicatas nao contam). `boot` e BIGINT (uint32 nao cabe em INTEGER).
+  ///
+  /// Enquanto lancar [UnimplementedError], a rota responde 501 e o app guarda
+  /// as tacadas na fila local e tenta de novo depois.
+  Future<int> insertTacadas(String userId, List<Map<String, Object?>> rows) {
+    throw UnimplementedError('insertTacadas: persistencia de tacadas ainda nao implementada');
   }
 
   // ---------------------------------------------------------------------

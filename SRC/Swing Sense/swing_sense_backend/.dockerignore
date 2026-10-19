@@ -1,0 +1,10 @@
+# Nunca copiar segredos nem artefatos locais para a imagem (R-12).
+.env
+.env.*
+!.env.example
+.dart_tool/
+build/
+.git/
+.gitignore
+*.md
+test/
