@@ -67,21 +67,17 @@ Testes de seguranca (rodam sem banco): `dart test`.
 docker compose up -d --build
 ```
 
-## Tacadas da raquete real (BLE) - pendente: banco
+## Tacadas da raquete real (BLE)
 
-O app ja conecta na raquete por Bluetooth (`INTEGRACAO_APP_BLE.md`, na pasta
+O app conecta na raquete por Bluetooth (`INTEGRACAO_APP_BLE.md`, na pasta
 acima) e envia as tacadas em lote para `POST /tacadas`. A rota
 (`lib/src/routes/tacada_routes.dart`) autentica, valida cada campo e entrega as
-linhas saneadas para `PgStore.insertTacadas`. **Falta so a persistencia:**
+linhas saneadas para `PgStore.insertTacadas`, que grava de forma idempotente
+(`ON CONFLICT (dispositivo_id, boot, seq) DO NOTHING`) numa transacao.
 
-1. Aplicar `lib/src/db/migrations/001_tacadas.sql` no Supabase (SQL Editor).
-2. Implementar `PgStore.insertTacadas` em `lib/src/db/postgres_store.dart` (o
-   comentario do metodo traz o contrato: chaves das linhas, idempotencia com
-   `ON CONFLICT (dispositivo_id, boot, seq) DO NOTHING`, transacao, retorno).
-3. Rodar `dart test` e testar de ponta a ponta com o app.
-
-Enquanto `insertTacadas` nao existir, a rota responde **501** e o app guarda as
-tacadas numa fila local e tenta de novo (nada se perde). O formato do corpo:
+**Pre-requisito:** aplicar `lib/src/db/migrations/001_tacadas.sql` no Supabase
+(SQL Editor). Sem a tabela, a rota responde 500 e o app guarda as tacadas na
+fila local e tenta de novo (nada se perde). O formato do corpo:
 
 ```json
 {"tacadas": [{"dispositivoId": "SwingSense-A1B2", "boot": 2891734012, "seq": 37, "t": 152340,

@@ -34,5 +34,7 @@ CREATE TABLE IF NOT EXISTS public.tacadas (
 CREATE INDEX IF NOT EXISTS tacadas_user_recebido_idx ON public.tacadas (user_id, recebido_em DESC);
 CREATE INDEX IF NOT EXISTS tacadas_session_idx ON public.tacadas (session_id);
 
--- Se o projeto usa RLS no Supabase, a API conecta com o usuario do banco (nao
--- pelo PostgREST), entao siga a mesma configuracao das outras tabelas.
+-- Todas as outras tabelas do projeto tem RLS ligado (conferido em 2026-10-19).
+-- Sem RLS, a tabela ficaria exposta pela API publica do Supabase (chave anon).
+-- A API Dart conecta direto pelo usuario do banco, igual as outras tabelas.
+ALTER TABLE public.tacadas ENABLE ROW LEVEL SECURITY;

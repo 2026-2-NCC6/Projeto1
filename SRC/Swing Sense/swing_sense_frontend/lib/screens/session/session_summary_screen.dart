@@ -67,14 +67,10 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
                 const SizedBox(height: 4),
                 Text(session.title, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
                 const SizedBox(height: 24),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.7,
-                  children: [
+                // Duas colunas com altura definida pelo conteudo: uma grade com
+                // proporcao fixa cortava o texto quando a fonte do aparelho e maior.
+                _TwoColumnTiles(
+                  tiles: [
                     _SummaryTile(label: 'Duracao', value: session.durationLabel, icon: Icons.timer_outlined),
                     _SummaryTile(label: 'Tacadas', value: '${session.shotCount}', icon: Icons.sports_tennis_outlined),
                     _SummaryTile(label: 'Aces', value: '${session.aceCount}', icon: Icons.bolt_outlined),
@@ -117,6 +113,32 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
         ),
       ),
     );
+  }
+}
+
+class _TwoColumnTiles extends StatelessWidget {
+  const _TwoColumnTiles({required this.tiles});
+  final List<Widget> tiles;
+
+  static const _gap = 12.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <Widget>[];
+    for (var i = 0; i < tiles.length; i += 2) {
+      if (i > 0) rows.add(const SizedBox(height: _gap));
+      rows.add(IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: tiles[i]),
+            const SizedBox(width: _gap),
+            Expanded(child: i + 1 < tiles.length ? tiles[i + 1] : const SizedBox.shrink()),
+          ],
+        ),
+      ));
+    }
+    return Column(children: rows);
   }
 }
 

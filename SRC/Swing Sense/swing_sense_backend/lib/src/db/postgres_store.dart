@@ -541,7 +541,7 @@ class PgStore {
   // tacadas (raquete real via BLE)
   // ---------------------------------------------------------------------
 
-  /// TODO(banco): gravar as tacadas recebidas em `POST /tacadas`.
+  /// Grava as tacadas recebidas em `POST /tacadas`.
   ///
   /// Pre-requisito: aplicar `lib/src/db/migrations/001_tacadas.sql` no Supabase.
   ///
@@ -551,15 +551,48 @@ class PgStore {
   /// UTC), tipo ('FH'|'BH'), incerto, bola (bool?), acel, giro, vel, accx,
   /// versaoFormato.
   ///
-  /// Deve ser IDEMPOTENTE: `INSERT ... ON CONFLICT (dispositivo_id, boot, seq)
-  /// DO NOTHING`, dentro de uma transacao (`pool.runTx`), com `user_id`
-  /// vindo de [userId]. Retorna quantas linhas foram realmente inseridas
-  /// (duplicatas nao contam). `boot` e BIGINT (uint32 nao cabe em INTEGER).
-  ///
-  /// Enquanto lancar [UnimplementedError], a rota responde 501 e o app guarda
-  /// as tacadas na fila local e tenta de novo depois.
-  Future<int> insertTacadas(String userId, List<Map<String, Object?>> rows) {
-    throw UnimplementedError('insertTacadas: persistencia de tacadas ainda nao implementada');
+  /// IDEMPOTENTE: `ON CONFLICT (dispositivo_id, boot, seq) DO NOTHING`, entao o
+  /// app pode reenviar o mesmo lote sem duplicar. Tudo numa transacao: ou o
+  /// lote inteiro entra, ou nada entra (e o app tenta de novo). Retorna quantas
+  /// linhas foram realmente inseridas (duplicatas nao contam).
+  Future<int> insertTacadas(String userId, List<Map<String, Object?>> rows) async {
+    return pool.runTx((session) async {
+      var inserted = 0;
+      for (final row in rows) {
+        final result = await session.execute(
+          Sql.named('''
+            INSERT INTO tacadas
+              (user_id, session_id, dispositivo_id, boot, seq, t_ms, recebido_em,
+               tipo, incerto, bola, acel, giro, vel, accx, versao_formato)
+            VALUES
+              (@userId::uuid, @sessionId::uuid, @dispositivoId, @boot::bigint, @seq::int,
+               @tMs::bigint, @recebidoEm::timestamptz, @tipo, @incerto::boolean,
+               @bola::boolean, @acel::real, @giro::real, @vel::int, @accx::real,
+               @versaoFormato::smallint)
+            ON CONFLICT (dispositivo_id, boot, seq) DO NOTHING
+          '''),
+          parameters: {
+            'userId': userId,
+            'sessionId': row['sessionId'],
+            'dispositivoId': row['dispositivoId'],
+            'boot': row['boot'],
+            'seq': row['seq'],
+            'tMs': row['tMs'],
+            'recebidoEm': row['recebidoEm'],
+            'tipo': row['tipo'],
+            'incerto': row['incerto'],
+            'bola': row['bola'],
+            'acel': row['acel'],
+            'giro': row['giro'],
+            'vel': row['vel'],
+            'accx': row['accx'],
+            'versaoFormato': row['versaoFormato'],
+          },
+        );
+        inserted += result.affectedRows;
+      }
+      return inserted;
+    });
   }
 
   // ---------------------------------------------------------------------
