@@ -5,8 +5,8 @@ inteligente (ESP32 + giroscopio + sensor de velocidade da bola, ainda em
 desenvolvimento). Projeto dividido em duas pastas independentes:
 
 ```
-swing_sense_app/       App mobile Flutter/Dart (Android e iOS)
-swing_sense_backend/   API em Dart (shelf + shelf_router), dados em memoria
+swing_sense_frontend/  App mobile Flutter/Dart (Android e iOS; roda tambem no Chrome, sem Bluetooth)
+swing_sense_backend/   API em Dart (shelf + shelf_router), dados no PostgreSQL do Supabase
 ```
 
 ## Visao geral
@@ -16,8 +16,10 @@ swing_sense_backend/   API em Dart (shelf + shelf_router), dados em memoria
   do tenis para novos usuarios.
 - Identidade visual inspirada no Spotify: fundo preto, verde (#1DB954) como cor
   de destaque, texto branco, com telas de carregamento e transicoes animadas.
-- A raquete inteligente ainda nao existe fisicamente. Enquanto isso, o app usa
-  um `MockRacketService` (`swing_sense_app/lib/services/mock_racket_service.dart`)
+- A raquete real (prototipo ESP32-C3 + MPU6050) fala com o app por Bluetooth
+  (`swing_sense_frontend/lib/services/ble/ble_racket_service.dart`) e cada tacada
+  e gravada na tabela `tacadas` do Supabase. Sem a raquete, o app usa um
+  `MockRacketService` (`swing_sense_frontend/lib/services/mock_racket_service.dart`)
   que gera telemetria realista (velocidade da bola, rotacao, angulo) e a envia
   para a API pelo mesmo contrato que o ESP32 usara no futuro
   (`POST /sessions/:id/events`). Trocar o mock pelo hardware real nao exige
@@ -33,15 +35,14 @@ dart pub get
 dart run bin/server.dart
 ```
 
-Nao precisa de banco de dados nem Docker: os dados de demonstracao sao
-gerados em memoria automaticamente a cada start do servidor (veja
-`swing_sense_backend/README.md` para detalhes).
-Login de demonstracao: `demo@swingsense.app` / `senha123`.
+Precisa de um `.env` com as credenciais do Supabase (copie `.env.example`;
+detalhes em `swing_sense_backend/README.md`). A API conecta no banco ao subir e
+falha logo se as credenciais estiverem erradas.
 
 ### 2. App mobile
 
 ```bash
-cd swing_sense_app
+cd swing_sense_frontend
 flutter pub get
 flutter run
 ```
@@ -53,14 +54,21 @@ mesma rede, rode com `--dart-define=API_BASE_URL=http://<ip-da-sua-maquina>:8080
 ## Por que Dart nos dois lados
 
 O time optou por um stack unico em Dart (Flutter no app, `shelf` puro no
-backend) para reduzir a curva de aprendizado entre front e back. O ambiente de
-hardware foi propositalmente deixado "plug and play" via `MockRacketService`,
-ja que a raquete inteligente ainda esta em desenvolvimento.
+backend) para reduzir a curva de aprendizado entre front e back. O app aceita
+tanto a raquete real (BLE) quanto a simulada (`MockRacketService`) pela mesma
+interface (`RacketSource`).
 
 ## Sobre o banco de dados
 
-Por enquanto a API guarda tudo em memoria (nenhum banco externo) para deixar o
-setup do projeto trivial durante o desenvolvimento do app e do design. A
-integracao com um banco de verdade (PostgreSQL, Firebase, etc.) fica para uma
-etapa futura do time - o schema de referencia continua em
-`swing_sense_backend/lib/src/db/schema.sql`.
+Os dados ficam no PostgreSQL do Supabase. A API conecta direto pelo pooler
+(pacote `postgres`), sem usar o SDK nem a API REST do Supabase, e todas as
+tabelas tem RLS ligado.
+
+- Modelo de dados de referencia: `swing_sense_backend/lib/src/db/schema.sql`
+- Mudancas posteriores, em ordem: `swing_sense_backend/lib/src/db/migrations/`
+  (`001_tacadas.sql` cria a tabela de tacadas da raquete real;
+  `002_tacadas_estatisticas.sql` adiciona estatisticas, views e triggers)
+
+Fluxo do dado da raquete: raquete -> BLE -> app (fila local, reenvio sem
+duplicar) -> `POST /tacadas` -> tabela `tacadas`. O banco mantem sozinho a
+velocidade da raquete de cada sessao e o `last_sync_at` do dispositivo.

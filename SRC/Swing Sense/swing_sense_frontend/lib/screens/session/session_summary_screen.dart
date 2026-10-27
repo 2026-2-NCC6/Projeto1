@@ -6,6 +6,7 @@ import '../../models/session_event.dart';
 import '../../models/training_session.dart';
 import '../../services/api_client.dart';
 import '../../services/session_service.dart';
+import '../../services/tacada_service.dart';
 import '../../widgets/primary_button.dart';
 import '../home/home_shell.dart';
 
@@ -19,13 +20,25 @@ class SessionSummaryScreen extends StatefulWidget {
 
 class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
   final _sessionService = SessionService(ApiClient.instance);
+  final _tacadaService = TacadaService(ApiClient.instance);
   List<SessionEvent> _events = [];
   bool _loadingEvents = true;
+  TacadaStats? _stats;
 
   @override
   void initState() {
     super.initState();
     _loadEvents();
+    _loadStats();
+  }
+
+  /// FH/BH/incertas vindos do banco. So aparece quando a sessao teve tacadas
+  /// da raquete real; falha de rede apenas omite os blocos.
+  Future<void> _loadStats() async {
+    try {
+      final stats = await _tacadaService.summaryForSession(widget.session.id);
+      if (mounted && stats.total > 0) setState(() => _stats = stats);
+    } catch (_) {}
   }
 
   Future<void> _loadEvents() async {
@@ -37,6 +50,8 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
       if (mounted) setState(() => _loadingEvents = false);
     }
   }
+
+  static String _kmh(double? v) => v != null ? '${v.round()} km/h' : '-';
 
   void _finish() {
     Navigator.of(context).pushAndRemoveUntil(
@@ -74,16 +89,25 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
                     _SummaryTile(label: 'Duracao', value: session.durationLabel, icon: Icons.timer_outlined),
                     _SummaryTile(label: 'Tacadas', value: '${session.shotCount}', icon: Icons.sports_tennis_outlined),
                     _SummaryTile(label: 'Aces', value: '${session.aceCount}', icon: Icons.bolt_outlined),
+                    // Raquete real: velocidade da RAQUETE (estimada, calculada pelo
+                    // banco). Sem raquete real: velocidade da bola, como antes.
                     _SummaryTile(
-                      label: 'Vel. media',
-                      value: session.avgBallSpeedKmh != null ? '${session.avgBallSpeedKmh!.round()} km/h' : '-',
+                      label: session.hasRacketSpeed ? 'Vel. media da raquete' : 'Vel. media',
+                      value: _kmh(session.hasRacketSpeed ? session.avgRacketSpeedKmh : session.avgBallSpeedKmh),
                       icon: Icons.speed_outlined,
                     ),
                     _SummaryTile(
-                      label: 'Vel. maxima',
-                      value: session.maxBallSpeedKmh != null ? '${session.maxBallSpeedKmh!.round()} km/h' : '-',
+                      label: session.hasRacketSpeed ? 'Vel. maxima da raquete' : 'Vel. maxima',
+                      value: _kmh(session.hasRacketSpeed ? session.maxRacketSpeedKmh : session.maxBallSpeedKmh),
                       icon: Icons.trending_up,
                     ),
+                    if (_stats != null) ...[
+                      _SummaryTile(label: 'Forehand', value: '${_stats!.forehand}', icon: Icons.sports_tennis),
+                      _SummaryTile(label: 'Backhand', value: '${_stats!.backhand}', icon: Icons.sports_tennis_outlined),
+                      if (_stats!.saque > 0)
+                        _SummaryTile(label: 'Saques', value: '${_stats!.saque}', icon: Icons.bolt_outlined),
+                      _SummaryTile(label: 'Classificacao incerta', value: '${_stats!.incertas}', icon: Icons.help_outline),
+                    ],
                     _SummaryTile(
                       label: 'Calorias',
                       value: session.calories != null ? '${session.calories} kcal' : '-',
@@ -92,8 +116,11 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
                   ],
                 ),
                 const SizedBox(height: 28),
-                const Text('Velocidade da bola ao longo do treino',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                Text(
+                    session.hasRacketSpeed
+                        ? 'Velocidade da raquete ao longo do treino'
+                        : 'Velocidade da bola ao longo do treino',
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                 const SizedBox(height: 12),
                 SizedBox(
                   height: 180,

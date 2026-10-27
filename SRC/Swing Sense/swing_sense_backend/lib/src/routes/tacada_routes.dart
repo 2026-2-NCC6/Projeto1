@@ -2,6 +2,7 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
 import '../db/postgres_store.dart';
+import '../mappers.dart';
 import '../middleware/auth_middleware.dart';
 import '../utils/response.dart';
 import '../utils/validators.dart';
@@ -61,7 +62,7 @@ Router tacadaRoutes(PgStore db) {
       }
 
       final tipo = item['tipo'];
-      if (tipo != 'FH' && tipo != 'BH') return ApiResponse.error(bad('tipo deve ser FH ou BH'));
+      if (tipo != 'FH' && tipo != 'BH' && tipo != 'SQ') return ApiResponse.error(bad('tipo deve ser FH, BH ou SQ'));
       final incerto = item['incerto'];
       if (incerto is! bool) return ApiResponse.error(bad('incerto deve ser booleano'));
       final bola = item['bola'];
@@ -113,6 +114,35 @@ Router tacadaRoutes(PgStore db) {
     } on UnimplementedError {
       return ApiResponse.error('Persistencia de tacadas ainda nao implementada', status: 501);
     }
+  });
+
+  // GET /tacadas?sessionId=&limit=&offset= - tacadas do proprio usuario, da mais
+  // antiga para a mais nova (padrao 100, maximo 500 por pagina).
+  router.get('/', (Request request) async {
+    final params = request.url.queryParameters;
+
+    final sessionId = params['sessionId'];
+    if (sessionId != null && !isUuid(sessionId)) return ApiResponse.error('sessionId invalido');
+
+    final limit = int.tryParse(params['limit'] ?? '') ?? 100;
+    final offset = int.tryParse(params['offset'] ?? '') ?? 0;
+    if (limit < 1 || limit > maxPerRequest) return ApiResponse.error('limit deve ficar entre 1 e $maxPerRequest');
+    if (offset < 0) return ApiResponse.error('offset invalido');
+
+    final rows = await db.getTacadas(request.userId, sessionId: sessionId, limit: limit, offset: offset);
+    return ApiResponse.ok(rows.map(tacadaToJson).toList());
+  });
+
+  // GET /tacadas/summary[?sessionId=] - estatisticas (FH/BH/SQ, incertas, medias e
+  // picos). Com sessionId, so daquela sessao; sem ele, de todas as tacadas do usuario.
+  router.get('/summary', (Request request) async {
+    final sessionId = request.url.queryParameters['sessionId'];
+    if (sessionId != null && !isUuid(sessionId)) return ApiResponse.error('sessionId invalido');
+
+    final row = sessionId == null
+        ? await db.getTacadaStatsForUser(request.userId)
+        : await db.getTacadaStatsForSession(sessionId, request.userId);
+    return ApiResponse.ok(row == null ? tacadaStatsToJson(const {}) : tacadaStatsToJson(row));
   });
 
   return router;

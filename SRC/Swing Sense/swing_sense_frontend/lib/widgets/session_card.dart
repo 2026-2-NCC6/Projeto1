@@ -158,7 +158,9 @@ class _CoverBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasSpeed = session.avgBallSpeedKmh != null;
+    // Raquete real: velocidade da RAQUETE (calculada pelo banco); senao, da bola.
+    final speed = session.hasRacketSpeed ? session.avgRacketSpeedKmh : session.avgBallSpeedKmh;
+    final hasSpeed = speed != null;
     return SizedBox(
       height: 130,
       width: double.infinity,
@@ -204,7 +206,7 @@ class _CoverBanner extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '${session.avgBallSpeedKmh!.round()}',
+                        '${speed!.round()}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w900,
@@ -212,10 +214,10 @@ class _CoverBanner extends StatelessWidget {
                           height: 1,
                         ),
                       ),
-                      const Padding(
-                        padding: EdgeInsets.only(left: 6, bottom: 6),
-                        child: Text('km/h · vel. media',
-                            style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12)),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 6, bottom: 6),
+                        child: Text(session.hasRacketSpeed ? 'km/h · vel. media da raquete' : 'km/h · vel. media',
+                            style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12)),
                       ),
                     ],
                   )
