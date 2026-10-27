@@ -113,7 +113,12 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
     _clock?.cancel();
     _racket.stop();
     await _flushEvents();
-    TacadaSyncService.instance.flush();
+    // Espera as tacadas chegarem ao banco (ele calcula a velocidade da raquete
+    // da sessao a cada lote) antes de buscar o resumo. Sem rede, segue em frente:
+    // o que ficou na fila e reenviado depois.
+    try {
+      await TacadaSyncService.instance.flush().timeout(const Duration(seconds: 6));
+    } catch (_) {}
 
     try {
       final updated = await _sessionService.update(
@@ -227,7 +232,10 @@ class _LiveSessionScreenState extends State<LiveSessionScreen> {
                 style: const TextStyle(fontSize: 56, fontWeight: FontWeight.w900, letterSpacing: -1),
               ),
               const SizedBox(height: 28),
-              _SpeedGauge(speed: _lastSpeed),
+              _SpeedGauge(
+                speed: _lastSpeed,
+                label: widget.useRealRacket ? 'km/h ultima tacada (raquete)' : 'km/h ultima bola',
+              ),
               const SizedBox(height: 28),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -304,8 +312,9 @@ class _RacketLinkChip extends StatelessWidget {
 }
 
 class _SpeedGauge extends StatelessWidget {
-  const _SpeedGauge({required this.speed});
+  const _SpeedGauge({required this.speed, required this.label});
   final double speed;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -327,7 +336,7 @@ class _SpeedGauge extends StatelessWidget {
             speed > 0 ? speed.round().toString() : '--',
             style: const TextStyle(fontSize: 44, fontWeight: FontWeight.w900),
           ),
-          const Text('km/h ultima bola', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          Text(label, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
         ],
       ),
     );

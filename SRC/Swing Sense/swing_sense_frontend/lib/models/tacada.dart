@@ -36,7 +36,8 @@ class Tacada {
   /// Milissegundos desde que o prototipo ligou. Nao e data/hora.
   final int t;
 
-  /// "FH" (forehand) ou "BH" (backhand). O saque aparece como "FH".
+  /// "FH" (forehand), "BH" (backhand) ou "SQ" (saque, quando o firmware passar
+  /// a classificar; hoje o saque ainda chega como "FH").
   final String tipo;
 
   /// true se a classificacao ficou perto do limiar (pode estar errada).
@@ -65,6 +66,7 @@ class Tacada {
   final String dispositivoId;
 
   bool get isForehand => tipo == 'FH';
+  bool get isServe => tipo == 'SQ';
 
   /// Decodifica os bytes de uma notificacao. Retorna `null` se a mensagem for
   /// invalida (o app registra e segue, nunca quebra).
@@ -92,7 +94,7 @@ class Tacada {
     final accx = j['accx'];
 
     if (v is! int || boot is! int || seq is! int || t is! int) return null;
-    if (tipo != 'FH' && tipo != 'BH') return null;
+    if (tipo != 'FH' && tipo != 'BH' && tipo != 'SQ') return null;
     if (incerto is! bool) return null;
     if (bola != null && bola is! bool) return null;
     if (acel is! num || giro is! num || vel is! num || accx is! num) return null;
@@ -143,7 +145,7 @@ class Tacada {
   /// alimenta `ballSpeedKmh` porque a interface atual so exibe essa metrica.
   /// Quando a medicao da bola existir, trocar aqui.
   SessionEvent toSessionEvent() => SessionEvent(
-        eventType: isForehand ? 'forehand' : 'backhand',
+        eventType: isServe ? 'serve' : (isForehand ? 'forehand' : 'backhand'),
         ballSpeedKmh: vel.toDouble(),
         occurredAt: recebidoEm,
       );

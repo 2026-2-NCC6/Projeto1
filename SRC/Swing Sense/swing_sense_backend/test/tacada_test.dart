@@ -39,6 +39,30 @@ class FakeStore implements PgStore {
     return inserted;
   }
 
+  Map<String, Object?>? lastList;
+  Map<String, Object?>? lastStats;
+
+  @override
+  Future<List<Map<String, dynamic>>> getTacadas(String userId, {String? sessionId, int limit = 100, int offset = 0}) async {
+    lastList = {'userId': userId, 'sessionId': sessionId, 'limit': limit, 'offset': offset};
+    return [
+      {'id': 1, 'session_id': sessionId, 'dispositivo_id': 'SwingSense-A1B2', 'boot': 7, 'seq': 1, 't_ms': 1500,
+       'recebido_em': DateTime.utc(2026, 10, 20), 'tipo': 'FH', 'incerto': false, 'bola': null,
+       'acel': 30.4, 'giro': 11.9, 'vel': 26, 'accx': 3.0, 'versao_formato': 1},
+    ];
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getTacadaStatsForSession(String sessionId, String userId) async {
+    lastStats = {'userId': userId, 'sessionId': sessionId};
+    return userId == otherUserId ? null : {'total': 3, 'forehand': 2, 'backhand': 1, 'saque': 0, 'incertas': 1,
+      'pct_incertas': '33.3', 'vel_raquete_max': 35};
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getTacadaStatsForUser(String userId) async =>
+      userId == otherUserId ? null : {'total': 3, 'sessoes': 1, 'forehand': 2, 'backhand': 1};
+
   @override
   noSuchMethod(Invocation invocation) => throw UnimplementedError('${invocation.memberName}');
 }
@@ -157,5 +181,52 @@ void main() {
     final r = await post({'tacadas': [tacada()]});
     expect(r.statusCode, 501);
     expect(await r.readAsString(), contains('ainda nao implementada'));
+  });
+
+  test('saque (SQ) e aceito', () async {
+    final r = await post({'tacadas': [tacada(tipo: 'SQ')]});
+    expect(r.statusCode, 201);
+    expect(db.saved.single['tipo'], 'SQ');
+  });
+
+  group('leitura', () {
+    Future<Response> get(String path, {String? as, bool auth = true}) => Future.value(app(Request(
+          'GET',
+          Uri.parse('http://localhost$path'),
+          headers: auth ? {'authorization': 'Bearer ${as ?? token}'} : {},
+        )));
+
+    test('exige autenticacao', () async {
+      expect((await get('/tacadas', auth: false)).statusCode, 401);
+      expect((await get('/tacadas/summary', auth: false)).statusCode, 401);
+    });
+
+    test('lista so as tacadas do usuario do token, com paginacao', () async {
+      final r = await get('/tacadas?sessionId=$sessionId&limit=10&offset=5');
+      expect(r.statusCode, 200);
+      expect(db.lastList, {'userId': userId, 'sessionId': sessionId, 'limit': 10, 'offset': 5});
+      final body = jsonDecode(await r.readAsString()) as List;
+      expect(body.single['tipo'], 'FH');
+      expect(body.single['t'], 1500);
+    });
+
+    test('parametros invalidos => 400', () async {
+      for (final path in ['/tacadas?sessionId=x', '/tacadas?limit=0', '/tacadas?limit=501', '/tacadas?offset=-1', '/tacadas/summary?sessionId=x']) {
+        expect((await get(path)).statusCode, 400, reason: path);
+      }
+    });
+
+    test('resumo da sessao e do usuario; sem dados devolve zeros', () async {
+      final s = jsonDecode(await (await get('/tacadas/summary?sessionId=$sessionId')).readAsString()) as Map;
+      expect(s['forehand'], 2);
+      expect(s['velRaqueteMax'], 35.0);
+      expect(db.lastStats, {'userId': userId, 'sessionId': sessionId});
+      final u = jsonDecode(await (await get('/tacadas/summary')).readAsString()) as Map;
+      expect(u['total'], 3);
+      final other = JwtUtil(secret: secret, expiresInHours: 24).generate(userId: otherUserId, email: 'b@x.com', role: 'player');
+      final z = jsonDecode(await (await get('/tacadas/summary', as: other)).readAsString()) as Map;
+      expect(z['total'], 0);
+      expect(z['velRaqueteMax'], isNull);
+    });
   });
 }

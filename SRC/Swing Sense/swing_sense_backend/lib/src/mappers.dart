@@ -93,6 +93,10 @@ Map<String, dynamic> sessionToJson(Map<String, dynamic> row) {
     'aceCount': toIntOr(row['ace_count']),
     'avgBallSpeedKmh': toDoubleOrNull(row['avg_ball_speed_kmh']),
     'maxBallSpeedKmh': toDoubleOrNull(row['max_ball_speed_kmh']),
+    // Velocidade estimada da RAQUETE (mantida pelo banco a partir das tacadas).
+    'avgRacketSpeedKmh': toDoubleOrNull(row['avg_racket_speed_kmh']),
+    'maxRacketSpeedKmh': toDoubleOrNull(row['max_racket_speed_kmh']),
+    'isDemo': row['is_demo'] == true,
     'calories': row['calories'] == null ? null : toIntOr(row['calories']),
     'notes': row['notes'],
     if (row.containsKey('user_name')) 'userName': row['user_name'],
@@ -137,6 +141,48 @@ Map<String, dynamic> deviceToJson(Map<String, dynamic> row) {
     'isSimulated': row['is_simulated'],
     'pairedAt': toIsoOrNull(row['paired_at']),
     'lastSyncAt': toIsoOrNull(row['last_sync_at']),
+  };
+}
+
+Map<String, dynamic> tacadaToJson(Map<String, dynamic> row) {
+  return {
+    'id': toIntOr(row['id']),
+    'sessionId': row['session_id'],
+    'dispositivoId': row['dispositivo_id'],
+    'boot': toIntOr(row['boot']),
+    'seq': toIntOr(row['seq']),
+    't': toIntOr(row['t_ms']),
+    'recebidoEm': toIsoOrNull(row['recebido_em']),
+    'tipo': row['tipo'],
+    'incerto': row['incerto'],
+    'bola': row['bola'],
+    'acel': toDoubleOrNull(row['acel']),
+    'giro': toDoubleOrNull(row['giro']),
+    'vel': toIntOr(row['vel']),
+    'accx': toDoubleOrNull(row['accx']),
+    'v': toIntOr(row['versao_formato']),
+  };
+}
+
+/// Estatisticas de tacadas (views `v_tacadas_sessao` / `v_tacadas_usuario`).
+/// Sem linhas, devolve zeros (o app nao precisa tratar 404).
+Map<String, dynamic> tacadaStatsToJson(Map<String, dynamic> row) {
+  return {
+    'total': toIntOr(row['total']),
+    'forehand': toIntOr(row['forehand']),
+    'backhand': toIntOr(row['backhand']),
+    'saque': toIntOr(row['saque']),
+    'incertas': toIntOr(row['incertas']),
+    'pctIncertas': toDoubleOrNull(row['pct_incertas']),
+    'acelMedia': toDoubleOrNull(row['acel_media']),
+    'acelMax': toDoubleOrNull(row['acel_max']),
+    'giroMedio': toDoubleOrNull(row['giro_medio']),
+    'giroMax': toDoubleOrNull(row['giro_max']),
+    'velRaqueteMedia': toDoubleOrNull(row['vel_raquete_media']),
+    'velRaqueteMax': toDoubleOrNull(row['vel_raquete_max']),
+    'sessoes': row.containsKey('sessoes') ? toIntOr(row['sessoes']) : null,
+    'primeiraTacada': toIsoOrNull(row['primeira_tacada']),
+    'ultimaTacada': toIsoOrNull(row['ultima_tacada']),
   };
 }
 

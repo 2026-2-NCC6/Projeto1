@@ -13,6 +13,9 @@ class TrainingSession {
     this.aceCount = 0,
     this.avgBallSpeedKmh,
     this.maxBallSpeedKmh,
+    this.avgRacketSpeedKmh,
+    this.maxRacketSpeedKmh,
+    this.isDemo = false,
     this.calories,
     this.notes,
     this.userName,
@@ -35,7 +38,17 @@ class TrainingSession {
   final int aceCount;
   final double? avgBallSpeedKmh;
   final double? maxBallSpeedKmh;
+
+  /// Velocidade estimada da RAQUETE (raquete real via BLE), calculada pelo banco.
+  /// Null em sessoes sem raquete real.
+  final double? avgRacketSpeedKmh;
+  final double? maxRacketSpeedKmh;
+
+  /// Sessao de demonstracao (dados de exemplo, nao medidos).
+  final bool isDemo;
   final int? calories;
+
+  bool get hasRacketSpeed => avgRacketSpeedKmh != null;
   final String? notes;
   final String? userName;
   final String? userAvatarUrl;
@@ -74,6 +87,9 @@ class TrainingSession {
       aceCount: (json['aceCount'] as num?)?.toInt() ?? 0,
       avgBallSpeedKmh: _toDouble(json['avgBallSpeedKmh']),
       maxBallSpeedKmh: _toDouble(json['maxBallSpeedKmh']),
+      avgRacketSpeedKmh: _toDouble(json['avgRacketSpeedKmh']),
+      maxRacketSpeedKmh: _toDouble(json['maxRacketSpeedKmh']),
+      isDemo: json['isDemo'] as bool? ?? false,
       calories: (json['calories'] as num?)?.toInt(),
       notes: json['notes'] as String?,
       userName: json['userName'] as String?,
