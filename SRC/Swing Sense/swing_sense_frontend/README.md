@@ -1,16 +1,49 @@
-# smart_sense_app
+# Swing Sense - App
 
-A new Flutter project.
+App Flutter (Android, iOS e Web) do Swing Sense: rede social de treinos de tenis
+integrada a uma raquete inteligente. Fala apenas com a API do backend
+(`../swing_sense_backend`); nao acessa o banco diretamente.
 
-## Getting Started
+## Como rodar
 
-This project is a starting point for a Flutter application.
+```bash
+flutter pub get
+flutter run                      # aparelho ou emulador
+flutter run -d chrome            # navegador (sem Bluetooth: usa a raquete simulada)
+```
 
-A few resources to get you started if this is your first Flutter project:
+A URL da API vem de `lib/core/config/app_config.dart`: `10.0.2.2:8080` no emulador
+Android e `localhost:8080` nos demais. Para um aparelho fisico na mesma rede:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```bash
+flutter run --dart-define=API_BASE_URL=http://<ip-da-sua-maquina>:8080
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Em build de release o app so aceita HTTPS (exceto localhost).
+
+## Raquete
+
+| Origem | Arquivo | Uso |
+|--------|---------|-----|
+| Raquete real (BLE) | `lib/services/ble/ble_racket_service.dart` | Conecta ao servico GATT `SwingSense`, recebe um JSON por tacada |
+| Raquete simulada | `lib/services/mock_racket_service.dart` | Gera telemetria sem hardware |
+
+As duas implementam `RacketSource` (`lib/services/racket_source.dart`), entao a
+tela de treino nao muda. As tacadas da raquete real passam por
+`TacadaSyncService` (`lib/services/tacada_sync_service.dart`): fila local salva no
+aparelho, envio em lote para `POST /tacadas` e reenvio sem duplicar se a rede cair.
+
+Ao encerrar um treino, o app espera o envio das tacadas (ate 6 s) antes de abrir
+o resumo, que le as estatisticas em `GET /tacadas/summary`
+(`lib/services/tacada_service.dart`). Com raquete real o resumo e o feed mostram a
+velocidade da RAQUETE (estimada, relativa); sem ela, a velocidade da bola.
+
+## Testes
+
+```bash
+flutter test
+```
+
+O teste `test/widget_test.dart` ("App inicia na splash screen sem travar") falha por
+um `Timer` pendente na splash. Ja falhava antes das mudancas de estatisticas de
+tacadas.

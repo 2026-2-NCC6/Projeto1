@@ -382,7 +382,7 @@ class PgStore {
         FROM sessoes_treinamento s
         LEFT JOIN treinamentos t ON t.id = s.training_id
         LEFT JOIN usuarios u ON u.id = s.user_id
-        WHERE s.status = 'completed' AND s.user_id IN (${idPlaceholders.join(', ')})
+        WHERE s.status = 'completed' AND s.shot_count > 0 AND s.user_id IN (${idPlaceholders.join(', ')})
         ORDER BY s.started_at DESC
         LIMIT 50
       '''),
@@ -400,7 +400,7 @@ class PgStore {
           EXISTS(SELECT 1 FROM curtidas_sessao cl2 WHERE cl2.session_id = s.id AND cl2.user_id = @viewerId::uuid) AS liked_by_me
         FROM sessoes_treinamento s
         LEFT JOIN treinamentos t ON t.id = s.training_id
-        WHERE s.user_id = @userId::uuid AND s.status = 'completed'
+        WHERE s.user_id = @userId::uuid AND s.status = 'completed' AND s.shot_count > 0
         ORDER BY s.started_at DESC
         LIMIT 50
       '''),
@@ -548,7 +548,7 @@ class PgStore {
   /// `rows` ja vem validado e saneado pela rota (tipos e faixas conferidos; o
   /// usuario e a sessao ja foram verificados). Cada item tem as chaves:
   /// sessionId (String?), dispositivoId, boot, seq, tMs, recebidoEm (DateTime
-  /// UTC), tipo ('FH'|'BH'), incerto, bola (bool?), acel, giro, vel, accx,
+  /// UTC), tipo ('FH'|'BH'|'SQ'), incerto, bola (bool?), acel, giro, vel, accx,
   /// versaoFormato.
   ///
   /// IDEMPOTENTE: `ON CONFLICT (dispositivo_id, boot, seq) DO NOTHING`, entao o
@@ -593,6 +593,48 @@ class PgStore {
       }
       return inserted;
     });
+  }
+
+  /// Tacadas do proprio usuario (nunca de outro), da mais antiga para a mais
+  /// nova, com paginacao. `sessionId` opcional restringe a uma sessao.
+  Future<List<Map<String, dynamic>>> getTacadas(
+    String userId, {
+    String? sessionId,
+    int limit = 100,
+    int offset = 0,
+  }) async {
+    final result = await pool.execute(
+      Sql.named('''
+        SELECT id, session_id, dispositivo_id, boot, seq, t_ms, recebido_em, tipo, incerto, bola,
+               acel, giro, vel, accx, versao_formato
+        FROM tacadas
+        WHERE user_id = @userId::uuid
+          AND (@sessionId::uuid IS NULL OR session_id = @sessionId::uuid)
+        ORDER BY recebido_em ASC, seq ASC
+        LIMIT @limit OFFSET @offset
+      '''),
+      parameters: {'userId': userId, 'sessionId': sessionId, 'limit': limit, 'offset': offset},
+    );
+    return _rows(result);
+  }
+
+  /// Estatisticas de uma sessao (view `v_tacadas_sessao`). Null se a sessao
+  /// nao tem tacadas ou nao e do usuario.
+  Future<Map<String, dynamic>?> getTacadaStatsForSession(String sessionId, String userId) async {
+    final result = await pool.execute(
+      Sql.named('SELECT * FROM v_tacadas_sessao WHERE session_id = @sessionId::uuid AND user_id = @userId::uuid'),
+      parameters: {'sessionId': sessionId, 'userId': userId},
+    );
+    return result.isEmpty ? null : _row(result.first);
+  }
+
+  /// Estatisticas de todas as tacadas do usuario (view `v_tacadas_usuario`).
+  Future<Map<String, dynamic>?> getTacadaStatsForUser(String userId) async {
+    final result = await pool.execute(
+      Sql.named('SELECT * FROM v_tacadas_usuario WHERE user_id = @userId::uuid'),
+      parameters: {'userId': userId},
+    );
+    return result.isEmpty ? null : _row(result.first);
   }
 
   // ---------------------------------------------------------------------

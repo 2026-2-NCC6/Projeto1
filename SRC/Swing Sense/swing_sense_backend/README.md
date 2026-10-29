@@ -2,14 +2,13 @@
 
 API REST em Dart (puro, sem framework de app - `shelf` + `shelf_router`) para o
 app Swing Sense: rede social de treinos de tenis integrada a uma raquete
-inteligente (ESP32 com giroscopio e sensor de velocidade da bola, ainda em
-desenvolvimento).
+inteligente (prototipo ESP32-C3 com giroscopio/acelerometro MPU6050; o sensor
+de velocidade da bola ainda nao existe).
 
-O ambiente foi propositalmente deixado "plug and play": o app mobile usa um
-`MockRacketService` que fala com esta mesma API (rota `POST
-/sessions/:id/events`) como se fosse o dispositivo real. Quando o ESP32
-estiver pronto, basta substituir o mock por uma conexao BLE/Wi-Fi que envie o
-mesmo formato de evento - nada na API muda.
+O app conversa com esta API de dois jeitos: a raquete real envia as tacadas por
+Bluetooth e o app as encaminha em lote para `POST /tacadas`; sem a raquete, o
+`MockRacketService` gera eventos no mesmo formato de `POST
+/sessions/:id/events`.
 
 ## Banco de dados: PostgreSQL (Supabase)
 
@@ -32,9 +31,11 @@ DB_PASSWORD=<senha-do-banco>
 DB_SSL_MODE=require
 ```
 
-Use a connection string do modo **Session pooler** (porta 5432) do Supabase -
-o modo Transaction pooler (porta 6543) nao suporta prepared statements, que
-esta API usa.
+Use a connection string do modo **Session pooler** (porta 5432) do Supabase,
+que e a indicada para um servidor de longa duracao como este. O Transaction
+pooler (porta 6543) tambem respondeu a consultas parametrizadas nos testes, mas
+nao e o modo recomendado: se usar, nao troque o `queryMode` do driver para
+`simple`, que nao aceita parametros.
 
 ## Como rodar
 
@@ -69,15 +70,25 @@ docker compose up -d --build
 
 ## Tacadas da raquete real (BLE)
 
-O app conecta na raquete por Bluetooth (`INTEGRACAO_APP_BLE.md`, na pasta
-acima) e envia as tacadas em lote para `POST /tacadas`. A rota
-(`lib/src/routes/tacada_routes.dart`) autentica, valida cada campo e entrega as
-linhas saneadas para `PgStore.insertTacadas`, que grava de forma idempotente
-(`ON CONFLICT (dispositivo_id, boot, seq) DO NOTHING`) numa transacao.
+O app conecta na raquete por Bluetooth e envia as tacadas em lote para
+`POST /tacadas`. A rota (`lib/src/routes/tacada_routes.dart`) autentica, valida
+cada campo e entrega as linhas saneadas para `PgStore.insertTacadas`, que grava
+de forma idempotente (`ON CONFLICT (dispositivo_id, boot, seq) DO NOTHING`) numa
+transacao.
 
-**Pre-requisito:** aplicar `lib/src/db/migrations/001_tacadas.sql` no Supabase
-(SQL Editor). Sem a tabela, a rota responde 500 e o app guarda as tacadas na
-fila local e tenta de novo (nada se perde). O formato do corpo:
+**Migrations (ja aplicadas no Supabase do projeto):**
+
+- `001_tacadas.sql`: tabela `tacadas`, com RLS ligado.
+- `002_tacadas_estatisticas.sql`: somente aditiva. Adiciona
+  `sessoes_treinamento.is_demo` e `avg/max_racket_speed_kmh`; triggers que
+  mantem essas colunas e o `dispositivos.last_sync_at` a cada lote de tacadas;
+  o tipo `SQ` (saque); indice unico de dispositivo por usuario; e as views
+  `v_tacadas_sessao`, `v_tacadas_usuario` e `v_sessoes_qualidade`
+  (`security_invoker`, sem acesso pela chave publica do Supabase).
+
+Para um banco novo, aplique-as em ordem no SQL Editor.
+
+**Escrita** - formato do corpo de `POST /tacadas` (`tipo`: `FH`, `BH` ou `SQ`):
 
 ```json
 {"tacadas": [{"dispositivoId": "SwingSense-A1B2", "boot": 2891734012, "seq": 37, "t": 152340,
@@ -85,15 +96,28 @@ fila local e tenta de novo (nada se perde). O formato do corpo:
   "acel": 80.4, "giro": 26.3, "vel": 95, "accx": 3.2, "v": 1, "sessionId": "<uuid opcional>"}]}
 ```
 
+**Leitura** - sempre do usuario do token:
+
+| Rota | Retorno |
+|------|---------|
+| `GET /tacadas?sessionId=&limit=&offset=` | Tacadas, da mais antiga para a mais nova (`limit` 1 a 500, padrao 100) |
+| `GET /tacadas/summary[?sessionId=]` | FH, BH, saque, incertas, medias e picos. Sem dados, devolve zeros |
+
+Observacao: `vel` e a velocidade ESTIMADA da raquete (pico de giro x 0,6 m), uma
+metrica relativa derivada do giro. Ela aparece nas sessoes como
+`avgRacketSpeedKmh`/`maxRacketSpeedKmh`; os campos `*BallSpeedKmh` continuam
+existindo, mas so fazem sentido quando houver um sensor de bola.
+
 ## Estrutura
 
 ```
 bin/server.dart          Entrypoint HTTP (abre o pool de conexao com o Supabase)
 lib/src/app.dart         Monta as rotas publicas e protegidas por JWT
-lib/src/db/              Database (pool Postgres), PgStore (queries) e schema.sql de referencia
+lib/src/db/              Database (pool Postgres), PgStore (queries), schema.sql de referencia e migrations/
 lib/src/middleware/       Autenticacao (Bearer JWT) e seguranca (CORS, cabecalhos, limite de corpo, erros)
 lib/src/utils/            JWT, senha, validadores, rate limiter e configuracao de seguranca
 test/security_test.dart   Testes que reproduzem os ataques do relatorio e provam as correcoes
+test/tacada_test.dart     Testes de POST/GET /tacadas (banco simulado)
 lib/src/routes/           Um arquivo por recurso (auth, users, feed, trainings, sessions, goals, glossary, devices)
 lib/src/mappers.dart      Conversao das linhas do Postgres para JSON da API
 ```
@@ -110,11 +134,14 @@ lib/src/mappers.dart      Conversao das linhas do Postgres para JSON da API
 | PUT    | /users/me                     | Editar perfil                                           | sim  |
 | GET    | /users/:id                    | Perfil publico de outro usuario                         | sim  |
 | POST   | /users/:id/follow             | Seguir usuario                                          | sim  |
-| GET    | /feed                         | Feed de treinos de quem voce segue                       | sim  |
+| GET    | /feed                         | Feed de treinos de quem voce segue (so sessoes com tacadas) | sim  |
 | GET    | /trainings                    | Catalogo de treinos                                      | sim  |
 | POST   | /sessions                     | Inicia uma sessao de treino                              | sim  |
 | PATCH  | /sessions/:id                 | Pausa/retoma/encerra e atualiza estatisticas             | sim  |
 | POST   | /sessions/:id/events           | Ingestao de telemetria (raquete real ou mock)            | sim  |
+| POST   | /tacadas                      | Grava um lote de tacadas da raquete real (idempotente)   | sim  |
+| GET    | /tacadas                      | Lista as tacadas do usuario (filtro por sessao, paginado) | sim  |
+| GET    | /tacadas/summary              | Estatisticas das tacadas (usuario ou sessao)             | sim  |
 | GET    | /goals                        | Metas do usuario                                          | sim  |
 | POST   | /devices/pair                 | Parear a raquete (simulada ou real)                      | sim  |
 
