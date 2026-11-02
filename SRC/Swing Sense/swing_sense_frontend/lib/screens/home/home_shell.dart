@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../dashboard/dashboard_screen.dart';
 import '../explore/explore_screen.dart';
 import '../goals/goals_screen.dart';
 import '../profile/profile_screen.dart';
@@ -22,6 +23,7 @@ class _HomeShellState extends State<HomeShell> {
     ExploreScreen(),
     SizedBox.shrink(),
     GoalsScreen(),
+    DashboardScreen(),
     ProfileScreen(),
   ];
 
@@ -57,6 +59,8 @@ class _HomeShellState extends State<HomeShell> {
             label: 'Treinar',
           ),
           const BottomNavigationBarItem(icon: Icon(Icons.flag_outlined), activeIcon: Icon(Icons.flag), label: 'Metas'),
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart_outlined), activeIcon: Icon(Icons.bar_chart), label: 'Dashboard'),
           const BottomNavigationBarItem(
               icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Perfil'),
         ],

@@ -6,6 +6,7 @@ import 'db/postgres_store.dart';
 import 'middleware/auth_middleware.dart';
 import 'middleware/security_middleware.dart';
 import 'routes/auth_routes.dart';
+import 'routes/dashboard_routes.dart';
 import 'routes/device_routes.dart';
 import 'routes/feed_routes.dart';
 import 'routes/glossary_routes.dart';
@@ -42,7 +43,8 @@ Handler buildHandler(PgStore db, {required SecurityConfig config, AuthLimiters? 
     ..mount('/sessions', sessionRoutes(db).call)
     ..mount('/goals', goalRoutes(db).call)
     ..mount('/devices', deviceRoutes(db).call)
-    ..mount('/tacadas', tacadaRoutes(db).call);
+    ..mount('/tacadas', tacadaRoutes(db).call)
+    ..mount('/dashboard', dashboardRoutes(db).call);
 
   final protectedHandler = const Pipeline()
       .addMiddleware(authMiddleware(jwtUtil))
