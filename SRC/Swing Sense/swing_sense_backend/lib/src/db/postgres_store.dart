@@ -638,6 +638,139 @@ class PgStore {
   }
 
   // ---------------------------------------------------------------------
+  // dashboard (agregacoes de tacadas e sessoes por periodo)
+  // ---------------------------------------------------------------------
+  //
+  // Regras comuns: so tacadas da raquete real, fora de sessoes de demonstracao
+  // (`is_demo`), no intervalo [from, to) e, se `tipo` vier, so daquele golpe.
+  // O "dia" de uma tacada e o dia no fuso de Sao Paulo, nao em UTC.
+
+  static const _tacadasDoPeriodo = '''
+    FROM tacadas t
+    LEFT JOIN sessoes_treinamento s ON s.id = t.session_id
+    WHERE t.user_id = @userId::uuid
+      AND t.recebido_em >= @from::timestamptz AND t.recebido_em < @to::timestamptz
+      AND COALESCE(s.is_demo, false) = false
+      AND (@tipo::text IS NULL OR t.tipo = @tipo::text)
+  ''';
+
+  static const _diaSp = "(t.recebido_em AT TIME ZONE 'America/Sao_Paulo')::date";
+
+  Map<String, Object?> _periodoParams(String userId, DateTime from, DateTime to, String? tipo) =>
+      {'userId': userId, 'from': from.toUtc(), 'to': to.toUtc(), 'tipo': tipo};
+
+  /// Totais do periodo: tacadas por tipo, incertas, velocidade, sessoes, dias ativos e tempo.
+  Future<Map<String, dynamic>> getDashboardTotals(String userId, DateTime from, DateTime to, {String? tipo}) async {
+    final result = await pool.execute(
+      Sql.named('''
+        SELECT
+          count(*)::int                                  AS tacadas,
+          count(*) FILTER (WHERE t.tipo = 'FH')::int     AS forehand,
+          count(*) FILTER (WHERE t.tipo = 'BH')::int     AS backhand,
+          count(*) FILTER (WHERE t.tipo = 'SQ')::int     AS saque,
+          count(*) FILTER (WHERE t.incerto)::int         AS incertas,
+          round(avg(t.vel)::numeric, 1)::float8          AS vel_media,
+          max(t.vel)::int                                AS vel_max,
+          count(DISTINCT t.session_id)::int              AS sessoes,
+          count(DISTINCT $_diaSp)::int                   AS dias_ativos,
+          COALESCE((
+            SELECT sum(x.duration_seconds) FROM sessoes_treinamento x
+             WHERE x.id IN (SELECT DISTINCT t2.session_id FROM tacadas t2
+                             WHERE t2.user_id = @userId::uuid AND t2.session_id IS NOT NULL
+                               AND t2.recebido_em >= @from::timestamptz AND t2.recebido_em < @to::timestamptz
+                               AND (@tipo::text IS NULL OR t2.tipo = @tipo::text))
+               AND x.is_demo = false
+          ), 0)::int                                     AS tempo_segundos
+        $_tacadasDoPeriodo
+      '''),
+      parameters: _periodoParams(userId, from, to, tipo),
+    );
+    return _row(result.first);
+  }
+
+  /// Uma linha por dia com tacadas no periodo (dias sem tacadas nao aparecem).
+  Future<List<Map<String, dynamic>>> getDashboardDaily(String userId, DateTime from, DateTime to, {String? tipo}) async {
+    final result = await pool.execute(
+      Sql.named('''
+        SELECT to_char($_diaSp, 'YYYY-MM-DD')        AS dia,
+               count(*)::int                         AS tacadas,
+               round(avg(t.vel)::numeric, 1)::float8 AS vel_media
+        $_tacadasDoPeriodo
+        GROUP BY $_diaSp
+        ORDER BY $_diaSp
+      '''),
+      parameters: _periodoParams(userId, from, to, tipo),
+    );
+    return _rows(result);
+  }
+
+  /// Ultimas sessoes do periodo com a velocidade e o mix de golpes de cada uma.
+  Future<List<Map<String, dynamic>>> getDashboardSessions(String userId, DateTime from, DateTime to,
+      {String? tipo, int limit = 20}) async {
+    final result = await pool.execute(
+      Sql.named('''
+        SELECT s.id, s.title, s.started_at,
+               count(*)::int                                  AS tacadas,
+               count(*) FILTER (WHERE t.tipo = 'FH')::int     AS forehand,
+               count(*) FILTER (WHERE t.tipo = 'BH')::int     AS backhand,
+               count(*) FILTER (WHERE t.tipo = 'SQ')::int     AS saque,
+               round(avg(t.vel)::numeric, 1)::float8          AS vel_media,
+               max(t.vel)::int                                AS vel_max
+        $_tacadasDoPeriodo AND t.session_id IS NOT NULL
+        GROUP BY s.id, s.title, s.started_at
+        ORDER BY s.started_at DESC
+        LIMIT @limit
+      '''),
+      parameters: {..._periodoParams(userId, from, to, tipo), 'limit': limit},
+    );
+    return _rows(result);
+  }
+
+  /// Quem o usuario segue + ele mesmo, com as metricas do periodo e a velocidade
+  /// media do periodo anterior (para calcular a evolucao).
+  Future<List<Map<String, dynamic>>> getLeaderboard(String me, DateTime from, DateTime to,
+      {DateTime? prevFrom}) async {
+    final result = await pool.execute(
+      Sql.named('''
+        WITH pessoas AS (
+          SELECT @me::uuid AS id
+          UNION
+          SELECT following_id FROM seguimentos WHERE follower_id = @me::uuid
+        )
+        SELECT u.id, u.name, u.avatar_url, u.level,
+               COALESCE(c.tacadas, 0)::int     AS tacadas,
+               COALESCE(c.dias_ativos, 0)::int AS dias_ativos,
+               c.vel_media                     AS vel_media,
+               p.vel_media                     AS vel_media_anterior,
+               COALESCE((
+                 SELECT sum(x.duration_seconds) FROM sessoes_treinamento x
+                  WHERE x.user_id = u.id AND x.is_demo = false AND x.status = 'completed'
+                    AND x.started_at >= @from::timestamptz AND x.started_at < @to::timestamptz
+               ), 0)::int                      AS tempo_segundos
+          FROM pessoas pe
+          JOIN usuarios u ON u.id = pe.id
+          LEFT JOIN LATERAL (
+            SELECT count(*) AS tacadas,
+                   count(DISTINCT (t.recebido_em AT TIME ZONE 'America/Sao_Paulo')::date) AS dias_ativos,
+                   round(avg(t.vel)::numeric, 1)::float8 AS vel_media
+              FROM tacadas t LEFT JOIN sessoes_treinamento s ON s.id = t.session_id
+             WHERE t.user_id = u.id AND COALESCE(s.is_demo, false) = false
+               AND t.recebido_em >= @from::timestamptz AND t.recebido_em < @to::timestamptz
+          ) c ON true
+          LEFT JOIN LATERAL (
+            SELECT round(avg(t.vel)::numeric, 1)::float8 AS vel_media
+              FROM tacadas t LEFT JOIN sessoes_treinamento s ON s.id = t.session_id
+             WHERE @prevFrom::timestamptz IS NOT NULL
+               AND t.user_id = u.id AND COALESCE(s.is_demo, false) = false
+               AND t.recebido_em >= @prevFrom::timestamptz AND t.recebido_em < @from::timestamptz
+          ) p ON true
+      '''),
+      parameters: {'me': me, 'from': from.toUtc(), 'to': to.toUtc(), 'prevFrom': prevFrom?.toUtc()},
+    );
+    return _rows(result);
+  }
+
+  // ---------------------------------------------------------------------
   // termos_glossario
   // ---------------------------------------------------------------------
 
