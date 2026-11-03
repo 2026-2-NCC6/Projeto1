@@ -1,38 +1,41 @@
 /*
-  PASSO 2 (v5) — Forehand x Backhand + FORCA pelo PICO REAL
+  PASSO 3 — v5 + envio das tacadas por BLE
 
   ============================================================
-  O QUE MUDOU EM RELACAO A v4
+  O QUE MUDOU EM RELACAO A v5
   ============================================================
-  1) FORCA ERA MEDIDA NO INSTANTE ERRADO
-     A v4 reportava o accelMag da PRIMEIRA leitura acima de 20 m/s2, ou
-     seja, o inicio da deteccao. Esse valor sempre fica logo acima de 20,
-     por isso a "forca" parecia sempre igual. Nos dados gravados:
-        forca reportada: 20.5 a 33.5 m/s2
-        pico real:       50.8 a 96.4 m/s2  (~100 ms depois)
-     Agora o codigo rastreia o PICO durante todo o golpe (impacto +
-     recuperacao) e so reporta quando a tacada termina.
+  Deteccao, classificacao, limiares e ranges do sensor sao IGUAIS a v5.
+  A unica novidade e que cada tacada, alem de impressa no Serial, e
+  enviada por BLE como JSON para o app (contrato: docs/CONTRATO_BLE.md).
 
-  2) GIROSCOPIO SATURANDO
-     Com faixa de +-500 graus/s (8.73 rad/s), todos os golpes gravados
-     bateram no teto varias vezes (leituras travadas em -8.731). Faixa
-     aumentada para +-2000 graus/s (34.9 rad/s). Nao afeta a classificacao
-     (que usa o acelerometro) nem o gatilho de preparacao (1.5 rad/s).
+  - Nome anunciado: SwingSense-XXXX (XXXX = final do MAC do chip)
+  - Modo "ao vivo": sem celular conectado, a tacada so aparece no Serial.
+  - Campo "bola" sempre null nesta versao (deteccao de contato = etapa 3).
+  - Todo o codigo BLE fica em ble_tacada.h (aba ao lado no Arduino IDE).
+  - setup() espera o Monitor Serial por no maximo 8 s (a v5 esperava
+    para sempre, o que travaria o prototipo rodando na bateria).
+  - A cada 5 s imprime "[vivo] ..." com o estado e se o BLE esta conectado.
 
-  3) VELOCIDADE ESTIMADA DA RAQUETE
-     velocidade = pico de velocidade angular x RAIO_EFETIVO_M
-     RAIO_EFETIVO_M e a distancia aproximada do eixo de rotacao (pulso)
-     ate o centro das cordas. E uma ESTIMATIVA: o giro real combina
-     pulso, cotovelo e ombro. Serve pra comparar golpes entre si, nao
-     como medicao absoluta. Documentar assim no relatorio.
+  Nao precisa instalar biblioteca nova: o BLE vem no core ESP32.
 
-  Classificacao: igual a v4 (janela fixa pre-impacto, accX > 14 = BH).
-  Saque nao e classificado (aparece como FOREHAND).
+  ============================================================
+  COMO TESTAR (celular com o app nRF Connect)
+  ============================================================
+  1. Grave o sketch e abra o Monitor Serial (115200). Deve aparecer
+     "BLE: anunciando como SwingSense-XXXX".
+  2. No nRF Connect: SCAN -> CONNECT em SwingSense-XXXX.
+     No Android, antes de ativar as notificacoes, peca MTU 185
+     (menu de 3 pontos -> Request MTU).
+  3. Abra o servico 5f650a50-... e toque no icone de setas
+     (notificacoes) da caracteristica efae8d7d-...
+  4. Faca golpes: cada um aparece como texto JSON no celular, igual a
+     linha "json:" do Monitor Serial.
 */
 
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
+#include "ble_tacada.h"
 
 Adafruit_MPU6050 mpu;
 
@@ -48,7 +51,7 @@ const unsigned long TEMPO_ESTAVEL_RECUPERACAO = 150;  // ms
 const unsigned long TIMEOUT_RECUPERACAO_SEG   = 2000; // ms
 
 // ---------- Classificacao ----------
-const float LIMIAR_ACCX_BACKHAND = 14.0;
+const float LIMIAR_ACCX_BACKHAND = 14.0;  
 const float ZONA_INCERTA         = 4.0;
 
 // ---------- Forca / velocidade ----------
@@ -70,13 +73,24 @@ String tipoAtual = "";
 float  accX_janelaAtual = 0;
 float  picoAccelMag = 0;
 float  picoGiroMag  = 0;
+unsigned long tempoImpacto = 0;
 
 int contForehand = 0;
 int contBackhand = 0;
 
+// ---------- Identificacao das tacadas (contrato BLE) ----------
+uint32_t idBoot = 0;       // sorteado a cada vez que o ESP32 liga
+uint32_t seqTacada = 0;    // 1, 2, 3... desde que ligou
+
 void setup() {
   Serial.begin(115200);
-  while (!Serial) delay(10);
+  // espera o Monitor Serial no maximo 8 s: na bateria (sem USB) o
+  // while(!Serial) da v5 travaria aqui para sempre e o BLE nunca iniciaria.
+  // No ESP32-C3 a porta USB reconecta depois do upload/reset, entao 2 s era
+  // pouco e as mensagens de inicio se perdiam antes do monitor abrir.
+  unsigned long inicioEspera = millis();
+  while (!Serial && millis() - inicioEspera < 8000) delay(10);
+  delay(500);  // folga pro monitor terminar de conectar
 
   Serial.println("Iniciando MPU6050...");
   if (!mpu.begin()) {
@@ -85,11 +99,22 @@ void setup() {
   }
 
   mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
-  mpu.setGyroRange(MPU6050_RANGE_2000_DEG);   // era 500: saturava nos golpes
+  mpu.setGyroRange(MPU6050_RANGE_2000_DEG);
   mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
 
+  idBoot = esp_random();
+
+  // nome com o final do MAC, pra distinguir prototipos
+  uint64_t mac = ESP.getEfuseMac();
+  char nome[20];
+  snprintf(nome, sizeof(nome), "SwingSense-%02X%02X",
+           (uint8_t)(mac >> 32), (uint8_t)(mac >> 40));
+  bleIniciar(nome);
+  Serial.print("BLE: anunciando como ");
+  Serial.println(nome);
+
   delay(100);
-  Serial.println("Pronto: FOREHAND x BACKHAND + forca pelo pico real.\n");
+  Serial.println("Pronto: FOREHAND x BACKHAND + forca pelo pico real + BLE.\n");
 }
 
 void guardarNoBuffer(float valor) {
@@ -124,6 +149,18 @@ void loop() {
 
   unsigned long agora = millis();
 
+  // sinal de vida a cada 5 s (so aparece no Serial; ajuda a ver que esta rodando)
+  static unsigned long ultimoStatus = 0;
+  if (agora - ultimoStatus >= 5000) {
+    ultimoStatus = agora;
+    Serial.print("[vivo] estado=");
+    Serial.print(estadoAtual);
+    Serial.print("  accelMag=");
+    Serial.print(accelMag, 1);
+    Serial.print("  BLE=");
+    Serial.println(bleConectado ? "conectado" : "aguardando celular");
+  }
+
   switch (estadoAtual) {
 
     case PARADO:
@@ -141,6 +178,7 @@ void loop() {
 
       if (accelMag > LIMIAR_ACEL_IMPACTO) {
         if (accelMag > picoAccelMag) picoAccelMag = accelMag;
+        tempoImpacto = agora;
         classificarNoImpacto();
         estadoAtual = IMPACTO;
         marcaTempo = agora;
@@ -200,12 +238,13 @@ void reportarTacada() {
   float velRaquete_ms  = picoGiroMag * RAIO_EFETIVO_M;
   float velRaquete_kmh = velRaquete_ms * 3.6;
   float picoG = picoAccelMag / 9.81;
+  bool incerto = fabs(accX_janelaAtual - LIMIAR_ACCX_BACKHAND) < ZONA_INCERTA;
 
   Serial.print(">> ");
   Serial.print(tipoAtual);
   Serial.print("   accX_janela=");
   Serial.print(accX_janelaAtual, 2);
-  if (fabs(accX_janelaAtual - LIMIAR_ACCX_BACKHAND) < ZONA_INCERTA) {
+  if (incerto) {
     Serial.print(" (perto do limiar)");
   }
   Serial.println();
@@ -224,18 +263,24 @@ void reportarTacada() {
   Serial.print(contForehand);
   Serial.print(" | backhand: ");
   Serial.println(contBackhand);
-  Serial.println();
-}
 
-/*
-  ============================================================
-  COMO VALIDAR A FORCA
-  ============================================================
-  1. Faca 3 golpes BEM fracos, 3 medios e 3 fortes (mesmo tipo de golpe).
-  2. Os tres grupos devem aparecer claramente separados em pico giro e
-     vel. estimada. Se separarem, a metrica funciona.
-  3. Se o pico giro chegar perto de 34.9 rad/s, o giroscopio saturou de
-     novo (improvavel com 2000 graus/s, mas vale conferir).
-  4. Se quiser calibrar RAIO_EFETIVO_M: com um radar de velocidade ou
-     video em camera lenta, compare a velocidade real com a estimada.
-*/
+  // ---------- JSON do contrato BLE (docs/CONTRATO_BLE.md) ----------
+  seqTacada++;
+  char json[200];
+  snprintf(json, sizeof(json),
+           "{\"v\":1,\"boot\":%lu,\"seq\":%lu,\"t\":%lu,\"tipo\":\"%s\","
+           "\"incerto\":%s,\"bola\":null,\"acel\":%.1f,\"giro\":%.1f,"
+           "\"vel\":%d,\"accx\":%.1f}",
+           (unsigned long)idBoot, (unsigned long)seqTacada,
+           (unsigned long)tempoImpacto,
+           tipoAtual == "BACKHAND" ? "BH" : "FH",
+           incerto ? "true" : "false",
+           picoAccelMag, picoGiroMag,
+           (int)(velRaquete_kmh + 0.5), accX_janelaAtual);
+
+  Serial.print("   json: ");
+  Serial.println(json);
+  Serial.println();
+
+  bleEnviarTacada(json);
+}
