@@ -93,7 +93,7 @@
 | **Versão/modelo** | Claude Sonnet 5, via claude.ai |
 | **Disciplina / Trabalho** | Redes de Computadores e Cibersegurança — Entrega 2 (mitigação de vulnerabilidades) |
 | **Finalidade de uso** | Apoio na organização do relatório complementar descrevendo as mitigações implementadas pela equipe no código do sistema. |
-| ***Prompts* principais utilizados** | "Ajude a organizar o relatório complementar de mitigações" |
+| ***Prompts* principais utilizados** | "Ajude a organizar o relatório complementar de mitigações" | "Revise a coerência entre os níveis dos riscos nas tabelas e nas matrizes"
 | **Trechos ou entregas afetadas** | Formatação do relatório complementar. Implementação das mitigações no código realizada pela equipe. |
 
 ### Disciplina 4 — Sistemas Embarcados e Robótica
