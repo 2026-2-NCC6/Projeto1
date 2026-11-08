@@ -40,6 +40,7 @@ O projeto integra, de forma prática, os conteúdos de cinco disciplinas do 6º 
  │   ├── 📄 Banner_FECAP_CCOMP6_AGLT.pdf<br>
  │   ├── 📄 Banner_FECAP_CCOMP6_AGLT.pptx<br>
  │   └── 📄 Documento - Projeto de Extensão - COM Empresa<br>
+ │   └── 📄 Ficha de Declaracao Uso IA - FECAP.pdf<br>
  ├── 🗂️ Imagens/<br>
  ├── 🗂️ SRC/<br>
  ├── 📄 .gitignore<br>
